@@ -83,7 +83,7 @@ const FOOD_DB = [
   {id:"f35",name:"Pork Chop",          protein:22,cal:231,unit:"100g"},
 ];
 
-function getTodayName(){return DAYS[new Date().getDay()===0?6:new Date().getDay()-1;}
+function getTodayName(){return DAYS[new Date().getDay()===0?6:new Date().getDay()-1];}
 function dateKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
 function todayKey(){return dateKey(new Date());}
 function getWeekDates(offset=0){
@@ -186,7 +186,7 @@ function App(){
   const tKey=todayKey();
 
   const getDayLog=k=>foodLog[k]||[];
-  const addFood=(k,meal,food,qty=1)=>{const e={id:`${Date.now()}-${Math.random()}`,name:food.name,protein:food.protein,cal:food.cal,qty,meal};setFoodLog(p=>({...p,[k]:[...(p[k]||[]),e]}));setAiEstRes(null);};;
+  const addFood=(k,meal,food,qty=1)=>{const e={id:`${Date.now()}-${Math.random()}`,name:food.name,protein:food.protein,cal:food.cal,qty,meal};setFoodLog(p=>({...p,[k]:[...(p[k]||[]),e]}));setAiEstRes(null);};
   const removeFood=(k,id)=>setFoodLog(p=>({...p,[k]:(p[k]||[]).filter(e=>e.id!==id)}));
   const updateQty=(k,id,q)=>setFoodLog(p=>({...p,[k]:(p[k]||[]).map(e=>e.id===id?{...e,qty:Math.max(0.5,Math.min(20,parseFloat(q)||1))}:e)}));
   const getDayMacros=k=>{const log=getDayLog(k);return{cal:Math.round(log.reduce((s,e)=>s+e.cal*e.qty,0)),protein:Math.round(log.reduce((s,e)=>s+e.protein*e.qty,0))};};
@@ -261,7 +261,7 @@ function App(){
   const filtered=FOOD_DB.filter(f=>f.name.toLowerCase().includes(searchQ.toLowerCase())).slice(0,12);
   const restPct=((restSecs-restRemain)/restSecs)*100;
 
-  const DayPicker=()=>
+  const DayPicker=()=>(
     <div style={{display:"flex",gap:5,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
       {DAYS.map((day,i)=>{
         const isTd=day===getTodayName(),isSel=day===selDay;
@@ -272,23 +272,26 @@ function App(){
           </button>
         );
       })}
-    </div>;
+    </div>
+  );
 
-  const CheckRow=({done,onToggle,label,color="#4ecdc4"})=>
+  const CheckRow=({done,onToggle,label,color="#4ecdc4"})=>(
     <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #1a1a1a",cursor:"pointer"}}>
       <div style={{width:20,height:20,borderRadius:5,border:done?"none":"2px solid #2a2a2a",background:done?color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s"}}>
         {done&&<span style={{fontSize:11,color:"#000"}}>✓</span>}
       </div>
       <span style={{fontSize:13,color:done?"#666":"#ccc",textDecoration:done?"line-through":"none",flex:1}}>{label}</span>
-    </div>;
+    </div>
+  );
 
-  const Modal=({onClose,title,titleColor="#ff6b35",children})=>
+  const Modal=({onClose,title,titleColor="#ff6b35",children})=>(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,margin:"0 auto",background:"#111",borderRadius:"20px 20px 0 0",padding:"22px 18px 44px",border:"1px solid #2a2a2a"}}>
         <div style={{fontSize:9,color:titleColor,letterSpacing:2,marginBottom:14}}>{title}</div>
         {children}
       </div>
-    </div>;
+    </div>
+  );
 
   return(
     <div style={c.app}>
@@ -356,7 +359,7 @@ function App(){
 
       {/* TABS */}
       <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",background:"#090909",position:"sticky",top:0,zIndex:20}}>
-        {[ ["today","Today"],["food","Food"],["timer","Timer"],["stats","Stats"],["coach","Coach"] ].map(([id,label])=>(
+        {[["today","Today"],["food","Food"],["timer","Timer"],["stats","Stats"],["coach","Coach"]].map(([id,label])=>(
           <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 2px",background:"none",border:"none",borderBottom:tab===id?"2px solid #ff6b35":"2px solid transparent",color:tab===id?"#ff6b35":"#888",fontSize:9,letterSpacing:1.5,textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"}}>{label}</button>
         ))}
       </div>
@@ -388,7 +391,7 @@ function App(){
                       <div style={{position:"relative",width:26,height:50}}>
                         <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:6,borderRadius:"3px 3px 0 0",background:filled?"#45b7d1":"#2a2a2a"}}/>
                         <div style={{position:"absolute",top:5,left:"50%",transform:"translateX(-50%)",width:10,height:5,background:filled?"#45b7d199":"#1e1e1e"}}/>
-                        <div style={{position:"absolute",top:10,left:0,right:0,bottom:0,borderRadius:6,border:`1.5px solid ${filled?"#45b7d155":"#2a2a2a"}`,background="#0d0d0d",overflow:"hidden"}}>
+                        <div style={{position:"absolute",top:10,left:0,right:0,bottom:0,borderRadius:6,border:`1.5px solid ${filled?"#45b7d155":"#2a2a2a"}`,background:"#0d0d0d",overflow:"hidden"}}>
                           <div style={{position:"absolute",bottom:0,left:0,right:0,height:filled?"100%":"0%",background:"#45b7d1cc",transition:"height 0.4s ease",borderRadius:"0 0 5px 5px"}}/>
                           <div style={{position:"absolute",top:3,left:3,width:3,height:12,borderRadius:2,background:"white",opacity:filled?0.2:0.05}}/>
                         </div>
@@ -408,8 +411,7 @@ function App(){
                 </div>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <button onClick={()=>setShowExModal(true)} style={{background:`${workout.color}20`,border:`1px solid ${workout.color}40`,borderRadius:8,color:workout.color,fontSize:10,padding:"4px 9px",cursor:"pointer",fontFamily:"inherit"}}>+ ADD</button>
-                  <div style={{width:40,height:40,borderRadius:"50%",background:`${workout.color}15`,border:`2px solid ${workout.color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:workout.color}}>{prog}%
-                  </div>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:`${workout.color}15`,border:`2px solid ${workout.color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:workout.color}}>{prog}%</div>
                 </div>
               </div>
               {getDayExs(selDay).map((ex)=>(
@@ -447,23 +449,23 @@ function App(){
             <DayPicker/>
             <div style={c.card}>
               <div style={{display:"flex",justifyContent:"space-around",marginBottom:10}}>
-                {[{v:`${macros.protein}g`,l:"PROTEIN",s:`${Math.max(0,165-macros.protein)}g left`,col:macros.protein>=165?"#4ecdc4":"#fff"},{v:`${macros.cal}",l:"CALORIES",s:`${Math.max(0,2400-macros.cal)} left`,col:macros.cal>2400?"#ff4444":"#fff"},{v:getDayLog(selKey).length,l:"ITEMS",s:"logged",col:"#96ceb4"}].map(s=>(
+                {[{v:`${macros.protein}g`,l:"PROTEIN",s:`${Math.max(0,165-macros.protein)}g left`,col:macros.protein>=165?"#4ecdc4":"#fff"},{v:`${macros.cal}`,l:"CALORIES",s:`${Math.max(0,2400-macros.cal)} left`,col:macros.cal>2400?"#ff4444":"#fff"},{v:getDayLog(selKey).length,l:"ITEMS",s:"logged",col:"#96ceb4"}].map(s=>(
                   <div key={s.l} style={{textAlign:"center"}}>
                     <div style={{fontSize:20,fontWeight:700,color:s.col}}>{s.v}</div>
                     <div style={{fontSize:9,color:"#999"}}>{s.l}</div>
-                    <div style{{fontSize:9,color:"#aaa"}}>{s.s}</div>
+                    <div style={{fontSize:9,color:"#aaa"}}>{s.s}</div>
                   </div>
                 ))}
               </div>
-              {[ ["PROTEIN",protPct,protPct>=100?"#4ecdc4":"#ff6b35"],["CALORIES",calPct,calPct>=100?"#ff4444":"#ffeaa7"] ].map(([l,p,col])=>(
-                <div key={l} style{{marginBottom:4}}>
+              {[["PROTEIN",protPct,protPct>=100?"#4ecdc4":"#ff6b35"],["CALORIES",calPct,calPct>=100?"#ff4444":"#ffeaa7"]].map(([l,p,col])=>(
+                <div key={l} style={{marginBottom:4}}>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:7,color:"#888",marginBottom:2}}><span>{l}</span><span>{Math.min(Math.round(p),100)}%</span></div>
-                  <div style{{height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style{{height:"100%",width:`${Math.min(p,100)}%`,background:col,borderRadius:2,transition:"width 0.4s"}}/></div>
+                  <div style={{height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(p,100)}%`,background:col,borderRadius:2,transition:"width 0.4s"}}/></div>
                 </div>
               ))}
             </div>
-            <div style{{display:"flex",gap:5,marginBottom:10}}>
-              {[ ["search","Search"],["ai","AI Estimate"],["checklist","Meals"] ].map(([id,label])=>(
+            <div style={{display:"flex",gap:5,marginBottom:10}}>
+              {[["search","Search"],["ai","AI Estimate"],["checklist","Meals"]].map(([id,label])=>(
                 <button key={id} onClick={()=>setFoodTab(id)} style={{flex:1,padding:"9px 4px",background:foodTab===id?"#ff6b35":"#111",border:foodTab===id?"none":"1px solid #1e1e1e",borderRadius:10,color:foodTab===id?"#000":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit",fontWeight:foodTab===id?700:400}}>{label}</button>
               ))}
             </div>
@@ -475,50 +477,50 @@ function App(){
             {foodTab==="search"&&(
               <div>
                 <div style={{background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-                  <span style{{color:"#888",fontSize:11}}>search</span>
+                  <span style={{color:"#888",fontSize:11}}>search</span>
                   <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="chicken, rice, steak..." style={{flex:1,background:"none",border:"none",outline:"none",color:"#fff",fontSize:13,fontFamily:"inherit"}}/>
                   {searchQ&&<button onClick={()=>setSearchQ("")} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:13}}>x</button>}
                 </div>
-                <div style{{display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   {(searchQ?filtered:FOOD_DB.slice(0,12)).map(food=>(
                     <div key={food.id} style={{display:"flex",alignItems:"center",gap:10,background:"#111",border:"1px solid #1e1e1e",borderRadius:11,padding:"10px 12px"}}>
-                      <div style{{width:38,height:38,borderRadius:8,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#ff6b35",fontWeight:700,flexShrink:0}}>{food.protein}g</div>
-                      <div style{{flex:1}}>
-                        <div style{{fontSize:12,color:"#ddd"}}>{food.name}</div>
-                        <div style{{fontSize:9,color:"#999"}}>{food.cal} kcal · {food.protein}g protein · per {food.unit}</div>
+                      <div style={{width:38,height:38,borderRadius:8,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#ff6b35",fontWeight:700,flexShrink:0}}>{food.protein}g</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,color:"#ddd"}}>{food.name}</div>
+                        <div style={{fontSize:9,color:"#999"}}>{food.cal} kcal · {food.protein}g protein · per {food.unit}</div>
                       </div>
-                      <button onClick={()=>addFood(selKey,activeMeal,food)} style{{background:"#ff6b35",border:"none",borderRadius:8,color:"#000",fontSize:18,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:700}}>+</button>
+                      <button onClick={()=>addFood(selKey,activeMeal,food)} style={{background:"#ff6b35",border:"none",borderRadius:8,color:"#000",fontSize:18,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:700}}>+</button>
                     </div>
                   ))}
-                  {searchQ&&filtered.length===0&&<div style{{textAlign:"center",color:"#888",fontSize:12,padding:20}}>No results — try AI Estimate</div>}
+                  {searchQ&&filtered.length===0&&<div style={{textAlign:"center",color:"#888",fontSize:12,padding:20}}>No results — try AI Estimate</div>}
                 </div>
               </div>
             )}
             {foodTab==="ai"&&(
               <div>
                 <div style={c.card}>
-                  <div style{{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:8}}>DESCRIBE WHAT YOU ATE</div>
-                  <textarea value={aiFoodIn} onChange={e=>setAiFoodIn(e.target.value)} placeholder='e.g. "200g pernil with arroz con gandules and 2 tostones"' style{{width:"100%",background:"#0d0d0d",border:"1px solid #2a2a2a",borderRadius:10,color:"#fff",fontSize:13,padding:"10px 12px",fontFamily:"inherit",outline:"none",resize:"none",height:72,boxSizing:"border-box",lineHeight:1.5}}/>
+                  <div style={{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:8}}>DESCRIBE WHAT YOU ATE</div>
+                  <textarea value={aiFoodIn} onChange={e=>setAiFoodIn(e.target.value)} placeholder='e.g. "200g pernil with arroz con gandules and 2 tostones"' style={{width:"100%",background:"#0d0d0d",border:"1px solid #2a2a2a",borderRadius:10,color:"#fff",fontSize:13,padding:"10px 12px",fontFamily:"inherit",outline:"none",resize:"none",height:72,boxSizing:"border-box",lineHeight:1.5}}/>
                   <button onClick={estimateFood} disabled={aiEstLoad} style={{...c.btn(aiFoodIn.trim()?"#ff6b35":"#1a1a1a",aiFoodIn.trim()?"#000":"#888"),marginTop:10,cursor:aiFoodIn.trim()?"pointer":"default"}}>
                     {aiEstLoad?"ESTIMATING...":"ESTIMATE MACROS"}
                   </button>
                 </div>
-                {aiEstLoad&&<div style{{display:"flex",gap:4,justifyContent:"center",padding:12}}>{[0,1,2].map(i=><div key={i} style{{width:7,height:7,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/> )}</div>}
+                {aiEstLoad&&<div style={{display:"flex",gap:4,justifyContent:"center",padding:12}}>{[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/>)}</div>}
                 {aiEstRes&&!aiEstRes.error&&(
-                  <div style{{...c.card,border:"1px solid #ff6b3530"}}>
-                    <div style{{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:10}}>AI ESTIMATE · {aiEstRes.confidence} confidence</div>
-                    <div style{{marginBottom:12}}>
-                      <div style{{fontSize:14,fontWeight:600,color:"#fff"}}>{aiEstRes.name}</div>
-                      <div style{{fontSize:9,color:"#999"}}>per {aiEstRes.unit||"serving"}</div>
+                  <div style={{...c.card,border:"1px solid #ff6b3530"}}>
+                    <div style={{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:10}}>AI ESTIMATE · {aiEstRes.confidence} confidence</div>
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:14,fontWeight:600,color:"#fff"}}>{aiEstRes.name}</div>
+                      <div style={{fontSize:9,color:"#999"}}>per {aiEstRes.unit||"serving"}</div>
                     </div>
-                    <div style{{display:"flex",gap:8,marginBottom:12}}>
-                      <div style{{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #4ecdc420"}}><div style{{fontSize:20,fontWeight:700,color:"#4ecdc4"}}>{aiEstRes.protein}g</div><div style{{fontSize:8,color:"#999"}}>PROTEIN</div></div>
-                      <div style{{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #ffeaa720"}}><div style{{fontSize:20,fontWeight:700,color:"#ffeaa7"}}>{aiEstRes.cal}</div><div style{{fontSize:8,color:"#999"}}>CALORIES</div></div>
+                    <div style={{display:"flex",gap:8,marginBottom:12}}>
+                      <div style={{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #4ecdc420"}}><div style={{fontSize:20,fontWeight:700,color:"#4ecdc4"}}>{aiEstRes.protein}g</div><div style={{fontSize:8,color:"#999"}}>PROTEIN</div></div>
+                      <div style={{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #ffeaa720"}}><div style={{fontSize:20,fontWeight:700,color:"#ffeaa7"}}>{aiEstRes.cal}</div><div style={{fontSize:8,color:"#999"}}>CALORIES</div></div>
                     </div>
                     <button onClick={()=>{addFood(selKey,activeMeal,{id:`ai-${Date.now()}`,...aiEstRes});setAiFoodIn("");}} style={c.btn("#ff6b35","#000")}>ADD TO {activeMeal.toUpperCase()}</button>
                   </div>
                 )}
-                {aiEstRes?.error&&<div style{{textAlign:"center",color:"#ff4444",fontSize:12,padding:16}}>Could not estimate. Be more specific.</div>}
+                {aiEstRes?.error&&<div style={{textAlign:"center",color:"#ff4444",fontSize:12,padding:16}}>Could not estimate. Be more specific.</div>}
               </div>
             )}
             {foodTab==="checklist"&&(
@@ -530,29 +532,29 @@ function App(){
                   const mc=Math.round(mealLog.reduce((s,e)=>s+e.cal*e.qty,0));
                   return(
                     <div key={meal} style={c.card}>
-                      <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:mealLog.length?10:0}}>
-                        <div style{{display:"flex",alignItems:"center",gap:10}}>
-                          <div onClick={()=>setMealChecks(p=>({...p,[`${selKey}-${meal}`]:!p[`${selKey}-${meal}`]}))} style{{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #2a2a2a",background:done?"#4ecdc4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
-                            {done&&<span style{{fontSize:12,color:"#000"}}>✓</span>}
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:mealLog.length?10:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div onClick={()=>setMealChecks(p=>({...p,[`${selKey}-${meal}`]:!p[`${selKey}-${meal}`]}))} style={{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #2a2a2a",background:done?"#4ecdc4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                            {done&&<span style={{fontSize:12,color:"#000"}}>✓</span>}
                           </div>
                           <div>
-                            <div style{{fontSize:13,fontWeight:600,color:done?"#666":"#fff",textDecoration:done?"line-through":"none"}}>{meal}</div>
-                            {mealLog.length>0&&<div style{{fontSize:9,color:"#999"}}>{mp}g protein · {mc} cal</div>}
+                            <div style={{fontSize:13,fontWeight:600,color:done?"#666":"#fff",textDecoration:done?"line-through":"none"}}>{meal}</div>
+                            {mealLog.length>0&&<div style={{fontSize:9,color:"#999"}}>{mp}g protein · {mc} cal</div>}
                           </div>
                         </div>
                         <button onClick={()=>{setFoodTab("search");setActiveMeal(meal);}} style={c.sbtn("#ff6b3515","1px solid #ff6b3530","#ff6b35")}>+ add</button>
                       </div>
                       {mealLog.map(entry=>(
                         <div key={entry.id} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 0",borderTop:"1px solid #1a1a1a"}}>
-                          <div style{{flex:1,minWidth:0}}>
-                            <div style{{fontSize:11,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
-                            <div style{{fontSize:9,color:"#999"}}>{Math.round(entry.cal*entry.qty)} cal · {Math.round(entry.protein*entry.qty)}g protein</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:11,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
+                            <div style={{fontSize:9,color:"#999"}}>{Math.round(entry.cal*entry.qty)} cal · {Math.round(entry.protein*entry.qty)}g protein</div>
                           </div>
-                          <div style{{display:"flex",alignItems:"center",gap:3,flexShrink:0}}>
-                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty-0.5)} style{{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
-                            <span style{{fontSize:11,color:"#ff6b35",minWidth:24,textAlign:"center"}}>{entry.qty}x</span>
-                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty+0.5)} style{{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-                            <button onClick={()=>removeFood(selKey,entry.id)} style{{width:22,height:22,background:"none",border:"none",color:"#888",fontSize:12,cursor:"pointer"}}>x</button>
+                          <div style={{display:"flex",alignItems:"center",gap:3,flexShrink:0}}>
+                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty-0.5)} style={{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
+                            <span style={{fontSize:11,color:"#ff6b35",minWidth:24,textAlign:"center"}}>{entry.qty}x</span>
+                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty+0.5)} style={{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                            <button onClick={()=>removeFood(selKey,entry.id)} style={{width:22,height:22,background:"none",border:"none",color:"#888",fontSize:12,cursor:"pointer"}}>x</button>
                           </div>
                         </div>
                       ))}
@@ -567,71 +569,71 @@ function App(){
         {/* TIMER */}
         {tab==="timer"&&(
           <div>
-            <div style{{display:"flex",gap:8,marginBottom:20}}>
-              {[ ["rest","Rest Timer"],["stopwatch","Stopwatch"] ].map(([id,label])=>(
-                <button key={id} onClick={()=>setTimerMode(id)} style{{flex:1,padding:10,background:timerMode===id?"#ff6b35":"#111",border:timerMode===id?"none":"1px solid #1e1e1e",borderRadius:12,color:timerMode===id?"#000":"#888",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:timerMode===id?700:400,letterSpacing:1}}>{label.toUpperCase()}</button>
+            <div style={{display:"flex",gap:8,marginBottom:20}}>
+              {[["rest","Rest Timer"],["stopwatch","Stopwatch"]].map(([id,label])=>(
+                <button key={id} onClick={()=>setTimerMode(id)} style={{flex:1,padding:10,background:timerMode===id?"#ff6b35":"#111",border:timerMode===id?"none":"1px solid #1e1e1e",borderRadius:12,color:timerMode===id?"#000":"#888",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:timerMode===id?700:400,letterSpacing:1}}>{label.toUpperCase()}</button>
               ))}
             </div>
             {timerMode==="rest"&&(
-              <div style{{textAlign:"center"}}>
-                <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>REST BETWEEN SETS</div>
-                <div style{{display:"flex",gap:8,marginBottom:24,justifyContent:"center"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>REST BETWEEN SETS</div>
+                <div style={{display:"flex",gap:8,marginBottom:24,justifyContent:"center"}}>
                   {[60,90,120,180].map(s=>(
-                    <button key={s} onClick={()=>{resetRest();setRestSecs(s);setRestRemain(s);}} style{{padding:"7px 12px",background:restSecs===s?"#ff6b35":"#111",border:restSecs===s?"none":"1px solid #2a2a2a",borderRadius:10,color:restSecs===s?"#000":"#888",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:restSecs===s?700:400}}>
+                    <button key={s} onClick={()=>{resetRest();setRestSecs(s);setRestRemain(s);}} style={{padding:"7px 12px",background:restSecs===s?"#ff6b35":"#111",border:restSecs===s?"none":"1px solid #2a2a2a",borderRadius:10,color:restSecs===s?"#000":"#888",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:restSecs===s?700:400}}>
                       {s<60?`${s}s`:`${Math.floor(s/60)}m${s%60?s%60+"s":""}`}
                     </button>
                   ))}
                 </div>
-                <div style{{position:"relative",width:200,height:200,margin:"0 auto 24px"}}>
-                  <svg width="200" height="200" style{{transform:"rotate(-90deg)"}}>
+                <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px"}}>
+                  <svg width="200" height="200" style={{transform:"rotate(-90deg)"}}>
                     <circle cx="100" cy="100" r="88" fill="none" stroke="#1a1a1a" strokeWidth="8"/>
                     <circle cx="100" cy="100" r="88" fill="none" stroke={restDone?"#4ecdc4":restRunning?"#ff6b35":"#333"} strokeWidth="8"
                       strokeDasharray={`${2*Math.PI*88}`}
                       strokeDashoffset={`${2*Math.PI*88*(restPct/100)}`}
                       strokeLinecap="round"/>
                   </svg>
-                  <div style{{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                    <div style{{fontSize:42,fontWeight:700,color:restDone?"#4ecdc4":"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtTime(restRemain)}</div>
-                    <div style{{fontSize:10,color:"#999"}}>{restDone?"REST DONE":restRunning?"RESTING...":"READY"}</div>
+                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{fontSize:42,fontWeight:700,color:restDone?"#4ecdc4":"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtTime(restRemain)}</div>
+                    <div style={{fontSize:10,color:"#999"}}>{restDone?"REST DONE":restRunning?"RESTING...":"READY"}</div>
                   </div>
                 </div>
-                <div style{{display:"flex",gap:12,justifyContent:"center"}}>
-                  <button onClick={resetRest} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
-                  <button onClick={()=>restRunning?resetRest():startRest(restSecs)} style{{width:72,height:72,borderRadius:"50%",background:restRunning?"#ff444433":"#ff6b35",border:restRunning?"2px solid #ff4444":"none",color:restRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+                <div style={{display:"flex",gap:12,justifyContent:"center"}}>
+                  <button onClick={resetRest} style={{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
+                  <button onClick={()=>restRunning?resetRest():startRest(restSecs)} style={{width:72,height:72,borderRadius:"50%",background:restRunning?"#ff444433":"#ff6b35",border:restRunning?"2px solid #ff4444":"none",color:restRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
                     {restRunning?"■":"▶"}
                   </button>
-                  <button onClick={()=>startRest(restSecs)} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>+SET</button>
+                  <button onClick={()=>startRest(restSecs)} style={{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>+SET</button>
                 </div>
               </div>
             )}
             {timerMode==="stopwatch"&&(
-              <div style{{textAlign:"center"}}>
-                <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>STOPWATCH / RUN TIMER</div>
-                <div style{{fontSize:50,fontWeight:700,color:"#fff",letterSpacing:2,marginBottom:8}}>{fmtSW(swMs)}</div>
-                <div style{{fontSize:11,color:"#999",marginBottom:28}}>{swRunning?"RUNNING...":swMs>0?"PAUSED":"READY"}</div>
-                <div style{{display:"flex",gap:12,justifyContent:"center",marginBottom:24}}>
-                  <button onClick={resetSw} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
-                  <button onClick={swRunning?stopSw:startSw} style{{width:72,height:72,borderRadius:"50%",background:swRunning?"#ff444433":"#ff6b35",border:swRunning?"2px solid #ff4444":"none",color:swRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>STOPWATCH / RUN TIMER</div>
+                <div style={{fontSize:50,fontWeight:700,color:"#fff",letterSpacing:2,marginBottom:8}}>{fmtSW(swMs)}</div>
+                <div style={{fontSize:11,color:"#999",marginBottom:28}}>{swRunning?"RUNNING...":swMs>0?"PAUSED":"READY"}</div>
+                <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:24}}>
+                  <button onClick={resetSw} style={{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
+                  <button onClick={swRunning?stopSw:startSw} style={{width:72,height:72,borderRadius:"50%",background:swRunning?"#ff444433":"#ff6b35",border:swRunning?"2px solid #ff4444":"none",color:swRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
                     {swRunning?"■":"▶"}
                   </button>
-                  <button onClick={lapSw} disabled={!swRunning} style{{width:56,height:56,borderRadius:"50%",background:swRunning?"#111":"#0d0d0d",border:"1px solid #2a2a2a",color:swRunning?"#aaa":"#333",fontSize:11,cursor:swRunning?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>LAP</button>
+                  <button onClick={lapSw} disabled={!swRunning} style={{width:56,height:56,borderRadius:"50%",background:swRunning?"#111":"#0d0d0d",border:"1px solid #2a2a2a",color:swRunning?"#aaa":"#333",fontSize:11,cursor:swRunning?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>LAP</button>
                 </div>
                 {swLaps.length>0&&(
                   <div style={c.card}>
-                    <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>LAPS</div>
+                    <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>LAPS</div>
                     {swLaps.map((lap,i)=>{
                       const split=lap-(swLaps[i-1]||0);
                       return(
-                        <div key={i} style{{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #1a1a1a"}}>
-                          <span style{{fontSize:11,color:"#888"}}>Lap {i+1}</span>
-                          <span style{{fontSize:11,color:"#45b7d1"}}>{fmtSW(split)}</span>
-                          <span style{{fontSize:11,color:"#999"}}>{fmtSW(lap)}</span>
+                        <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #1a1a1a"}}>
+                          <span style={{fontSize:11,color:"#888"}}>Lap {i+1}</span>
+                          <span style={{fontSize:11,color:"#45b7d1"}}>{fmtSW(split)}</span>
+                          <span style={{fontSize:11,color:"#999"}}>{fmtSW(lap)}</span>
                         </div>
                       );
                     })}
                   </div>
                 )}
-                <button onClick={()=>setShowRunModal(true)} style{{...c.btn("#45b7d115","#45b7d1"),border:"1px solid #45b7d130",marginTop:16}}>LOG THIS RUN</button>
+                <button onClick={()=>setShowRunModal(true)} style={{...c.btn("#45b7d115","#45b7d1"),border:"1px solid #45b7d130",marginTop:16}}>LOG THIS RUN</button>
               </div>
             )}
           </div>
@@ -640,99 +642,99 @@ function App(){
         {/* STATS */}
         {tab==="stats"&&(
           <div>
-            <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <button onClick={()=>setWeekOff(p=>p-1)} style{{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-              <div style{{textAlign:"center"}}>
-                <div style{{fontSize:11,color:"#fff",fontWeight:600}}>{weekDates[0].toLocaleDateString("en",{month:"short",day:"numeric"})} - {weekDates[6].toLocaleDateString("en",{month:"short",day:"numeric"})}</div>
-                <div style{{fontSize:8,color:"#999"}}>{weekOff===0?"THIS WEEK":weekOff<0?`${Math.abs(weekOff)}w ago`:`${weekOff}w ahead`}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <button onClick={()=>setWeekOff(p=>p-1)} style={{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:11,color:"#fff",fontWeight:600}}>{weekDates[0].toLocaleDateString("en",{month:"short",day:"numeric"})} - {weekDates[6].toLocaleDateString("en",{month:"short",day:"numeric"})}</div>
+                <div style={{fontSize:8,color:"#999"}}>{weekOff===0?"THIS WEEK":weekOff<0?`${Math.abs(weekOff)}w ago`:`${weekOff}w ahead`}</div>
               </div>
-              <button onClick={()=>setWeekOff(p=>p+1)} style{{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+              <button onClick={()=>setWeekOff(p=>p+1)} style={{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
             </div>
-            <div style{{display:"flex",gap:8,marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
               {[{v:weekDates.filter((_,i)=>getProgress(DAYS[i])===100).length,l:"Workouts",s:"completed",col:"#ff6b35"},{v:`${weekMiles().toFixed(1)}mi`,l:"Miles Run",s:"this week",col:"#45b7d1"},{v:weekDates.reduce((s,d)=>s+(waterLog[dateKey(d)]||0),0),l:"Bottles",s:"of water",col:"#4ecdc4"}].map(s=>(
-                <div key={s.l} style{{flex:1,...c.card,margin:0,textAlign:"center"}}>
-                  <div style{{fontSize:20,fontWeight:700,color:s.col}}>{s.v}</div>
-                  <div style{{fontSize:9,color:"#aaa"}}>{s.l}</div>
-                  <div style{{fontSize:8,color:"#999"}}>{s.s}</div>
+                <div key={s.l} style={{flex:1,...c.card,margin:0,textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:700,color:s.col}}>{s.v}</div>
+                  <div style={{fontSize:9,color:"#aaa"}}>{s.l}</div>
+                  <div style={{fontSize:8,color:"#999"}}>{s.s}</div>
                 </div>
               ))}
             </div>
             <div style={c.card}>
-              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                <div><div style{{fontSize:9,color:"#999",letterSpacing:2}}>WEIGHT TRACKER</div><div style{{fontSize:15,fontWeight:700,color:"#fff"}}>{weights[tKey]?`${weights[tKey]} lbs`:"Not logged today"}</div></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div><div style={{fontSize:9,color:"#999",letterSpacing:2}}>WEIGHT TRACKER</div><div style={{fontSize:15,fontWeight:700,color:"#fff"}}>{weights[tKey]?`${weights[tKey]} lbs`:"Not logged today"}</div></div>
                 <button onClick={()=>setShowWeightModal(true)} style={c.sbtn("#ff6b3520","1px solid #ff6b3540","#ff6b35")}>LOG</button>
               </div>
-              <div style{{display:"flex",gap:3,alignItems:"flex-end",height:56}}>
+              <div style={{display:"flex",gap:3,alignItems:"flex-end",height:56}}>
                 {weekDates.map((d,i)=>{
                   const w=weights[dateKey(d)];
                   const allW=Object.values(weights).filter(Boolean);
                   const min=allW.length?Math.min(...allW)-1:140,max=allW.length?Math.max(...allW)+1:200;
                   const h=w?Math.max(4,((w-min)/(max-min||1))*50):4;
                   return(
-                    <div key={i} style{{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      {w&&<div style{{fontSize:7,color:"#ff6b35"}}>{w}</div>}
-                      <div style{{width:"100%",height:`${h}px`,background:w?"#ff6b35":"#1a1a1a",borderRadius:3,minHeight:4}}/>
-                      <div style{{fontSize:7,color:"#999"}}>{DAYS[i].slice(0,1)}</div>
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      {w&&<div style={{fontSize:7,color:"#ff6b35"}}>{w}</div>}
+                      <div style={{width:"100%",height:`${h}px`,background:w?"#ff6b35":"#1a1a1a",borderRadius:3,minHeight:4}}/>
+                      <div style={{fontSize:7,color:"#999"}}>{DAYS[i].slice(0,1)}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
             <div style={c.card}>
-              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                <div style{{fontSize:9,color:"#999",letterSpacing:2}}>PERSONAL RECORDS</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style={{fontSize:9,color:"#999",letterSpacing:2}}>PERSONAL RECORDS</div>
                 <button onClick={()=>setShowPRModal(true)} style={c.sbtn("#4ecdc420","1px solid #4ecdc440","#4ecdc4")}>LOG PR</button>
               </div>
               {LIFTS.map(lift=>{
                 const best=Object.entries(prs).flatMap(([,v])=>v[lift]?[v[lift]]:[]).sort((a,b)=>b-a)[0];
                 return(
-                  <div key={lift} style{{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #1a1a1a"}}>
-                    <span style{{fontSize:12,color:"#ccc"}}>{lift}</span>
-                    <span style{{fontSize:13,fontWeight:700,color:best?"#4ecdc4":"#777"}}>{best?`${best} lbs`:"—"}</span>
+                  <div key={lift} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #1a1a1a"}}>
+                    <span style={{fontSize:12,color:"#ccc"}}>{lift}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:best?"#4ecdc4":"#777"}}>{best?`${best} lbs`:"—"}</span>
                   </div>
                 );
               })}
             </div>
             <div style={c.card}>
-              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                <div style{{fontSize:9,color:"#999",letterSpacing:2}}>RUN LOG</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style={{fontSize:9,color:"#999",letterSpacing:2}}>RUN LOG</div>
                 <button onClick={()=>setShowRunModal(true)} style={c.sbtn("#45b7d120","1px solid #45b7d140","#45b7d1")}>LOG RUN</button>
               </div>
               {weekDates.map((d,i)=>{const r=runs[dateKey(d)];if(!r)return null;return(
-                <div key={i} style{{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #1a1a1a"}}>
-                  <span style{{fontSize:11,color:"#888"}}>{DAYS[i].slice(0,3)} {d.getDate()}</span>
-                  <span style{{fontSize:12,color:"#45b7d1",fontWeight:600}}>{r.miles} mi</span>
-                  <span style{{fontSize:11,color:"#999"}}>{r.pace||"—"} /mi</span>
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #1a1a1a"}}>
+                  <span style={{fontSize:11,color:"#888"}}>{DAYS[i].slice(0,3)} {d.getDate()}</span>
+                  <span style={{fontSize:12,color:"#45b7d1",fontWeight:600}}>{r.miles} mi</span>
+                  <span style={{fontSize:11,color:"#999"}}>{r.pace||"—"} /mi</span>
                 </div>
               );})}
-              {weekDates.every(d=>!runs[dateKey(d)])&&<div style{{fontSize:12,color:"#777",textAlign:"center",padding:"8px 0"}}>No runs this week</div>}
+              {weekDates.every(d=>!runs[dateKey(d)])&&<div style={{fontSize:12,color:"#777",textAlign:"center",padding:"8px 0"}}>No runs this week</div>}
             </div>
             <div style={c.card}>
-              <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>STREAK</div>
-              <div style{{display:"flex",alignItems:"center",gap:12}}>
-                <div style{{fontSize:48,fontWeight:700,color:"#ffeaa7",lineHeight:1}}>{streak}</div>
-                <div style{{fontSize:11,color:"#888"}}>consecutive days with all rules completed</div>
+              <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>STREAK</div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{fontSize:48,fontWeight:700,color:"#ffeaa7",lineHeight:1}}>{streak}</div>
+                <div style={{fontSize:11,color:"#888"}}>consecutive days with all rules completed</div>
               </div>
             </div>
-            <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:10}}>DAY BY DAY</div>
+            <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:10}}>DAY BY DAY</div>
             {DAYS.map((day,i)=>{
               const w=WORKOUTS[day],p=getProgress(day),dk=dateKey(weekDates[i]),m=getDayMacros(dk),isTd=day===getTodayName()&&weekOff===0;
               return(
-                <div key={day} onClick={()=>{setSelDay(day);setWeekOff(0);setTab("today");}} style{{background:"#111",border:isTd?`1px solid ${w.color}55`:"1px solid #1a1a1a",borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
-                  <div style{{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style{{display:"flex",alignItems:"center",gap:10}}>
-                      <div style{{width:32,height:32,borderRadius:9,background:`${w.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:w.color}}>{weekDates[i].getDate()}</div>
+                <div key={day} onClick={()=>{setSelDay(day);setWeekOff(0);setTab("today");}} style={{background:"#111",border:isTd?`1px solid ${w.color}55`:"1px solid #1a1a1a",borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{width:32,height:32,borderRadius:9,background:`${w.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:w.color}}>{weekDates[i].getDate()}</div>
                       <div>
-                        <div style{{fontSize:12,fontWeight:600,color:isTd?"#fff":"#888"}}>{day}{isTd?" · TODAY":""}</div>
-                        <div style{{fontSize:10,color:w.color}}>{w.name}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:isTd?"#fff":"#888"}}>{day}{isTd?" · TODAY":""}</div>
+                        <div style={{fontSize:10,color:w.color}}>{w.name}</div>
                       </div>
                     </div>
-                    <div style{{textAlign:"right"}}>
-                      <div style{{fontSize:11,color:p===100?"#4ecdc4":"#888"}}>{p}%</div>
-                      <div style{{fontSize:10,color:m.protein>=165?"#4ecdc4":"#888"}}>{m.protein}g · {m.cal}cal</div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:11,color:p===100?"#4ecdc4":"#888"}}>{p}%</div>
+                      <div style={{fontSize:10,color:m.protein>=165?"#4ecdc4":"#888"}}>{m.protein}g · {m.cal}cal</div>
                     </div>
                   </div>
-                  <div style{{marginTop:6,height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style{{height:"100%",width:`${p}%`,background:w.color,borderRadius:2}}/></div>
+                  <div style={{marginTop:6,height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${p}%`,background:w.color,borderRadius:2}}/></div>
                 </div>
               );
             })}
@@ -741,24 +743,24 @@ function App(){
 
         {/* COACH */}
         {tab==="coach"&&(
-          <div style{{display:"flex",flexDirection:"column",height:"calc(100vh - 230px)"}}>
-            <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:12}}>AI COACH</div>
-            <div style{{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 230px)"}}>
+            <div style={{fontSize:9,color:"#999",letterSpacing:2,marginBottom:12}}>AI COACH</div>
+            <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
               {aiMsgs.map((msg,i)=>(
-                <div key={i} style{{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
-                  <div style{{maxWidth:"87%",padding:"10px 12px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"#ff6b35":"#111",border:msg.role==="assistant"?"1px solid #1e1e1e":"none",color:msg.role==="user"?"#000":"#ccc",fontSize:13,lineHeight:1.6,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{msg.content}</div>
+                <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
+                  <div style={{maxWidth:"87%",padding:"10px 12px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"#ff6b35":"#111",border:msg.role==="assistant"?"1px solid #1e1e1e":"none",color:msg.role==="user"?"#000":"#ccc",fontSize:13,lineHeight:1.6,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{msg.content}</div>
                 </div>
               ))}
-              {aiLoad&&<div style{{display:"flex",gap:4,padding:"10px 12px"}}>{[0,1,2].map(i=><div key={i} style{{width:6,height:6,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/> )}</div>}
+              {aiLoad&&<div style={{display:"flex",gap:4,padding:"10px 12px"}}>{[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/>)}</div>}
               <div ref={chatEnd}/>
             </div>
-            <div style{{display:"flex",gap:8,background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"7px 7px 7px 13px"}}>
-              <input value={aiIn} onChange={e=>setAiIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendCoach()} placeholder="Ask your coach..." style{{flex:1,background:"none",border:"none",outline:"none",color:"#fff",fontSize:13,fontFamily:"inherit"}}/>
-              <button onClick={sendCoach} disabled={aiLoad||!aiIn.trim()} style{{width:32,height:32,borderRadius:9,background:aiIn.trim()?"#ff6b35":"#1a1a1a",border:"none",color:aiIn.trim()?"#000":"#888",fontSize:16,cursor:aiIn.trim()?"pointer":"default",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+            <div style={{display:"flex",gap:8,background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"7px 7px 7px 13px"}}>
+              <input value={aiIn} onChange={e=>setAiIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendCoach()} placeholder="Ask your coach..." style={{flex:1,background:"none",border:"none",outline:"none",color:"#fff",fontSize:13,fontFamily:"inherit"}}/>
+              <button onClick={sendCoach} disabled={aiLoad||!aiIn.trim()} style={{width:32,height:32,borderRadius:9,background:aiIn.trim()?"#ff6b35":"#1a1a1a",border:"none",color:aiIn.trim()?"#000":"#888",fontSize:16,cursor:aiIn.trim()?"pointer":"default",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
             </div>
-            <div style{{display:"flex",gap:5,marginTop:8,overflowX:"auto",paddingBottom:4}}>
+            <div style={{display:"flex",gap:5,marginTop:8,overflowX:"auto",paddingBottom:4}}>
               {["What to eat now?","Am I on track?","Motivate me","Pre-run fuel?","Hit 165g protein?"].map(q=>(
-                <button key={q} onClick={()=>setAiIn(q)} style{{whiteSpace:"nowrap",padding:"5px 9px",background:"#111",border:"1px solid #1a1a1a",borderRadius:20,color:"#aaa",fontSize:9,cursor:"pointer",fontFamily:"inherit"}}>{q}</button>
+                <button key={q} onClick={()=>setAiIn(q)} style={{whiteSpace:"nowrap",padding:"5px 9px",background:"#111",border:"1px solid #1a1a1a",borderRadius:20,color:"#aaa",fontSize:9,cursor:"pointer",fontFamily:"inherit"}}>{q}</button>
               ))}
             </div>
           </div>
@@ -775,14 +777,14 @@ function App(){
       {showWeightModal&&(
         <Modal onClose={()=>setShowWeightModal(false)} title={`LOG WEIGHT - ${selDay.toUpperCase()}`}>
           <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder="e.g. 156.5" style={{...c.inp("#ff6b35"),fontSize:24,fontWeight:700,marginBottom:8}}/>
-          <div style{{fontSize:9,color:"#999",marginBottom:14}}>lbs</div>
+          <div style={{fontSize:9,color:"#999",marginBottom:14}}>lbs</div>
           <button onClick={()=>{if(weightInput){setWeights(p=>({...p,[selKey]:parseFloat(weightInput)}));setWeightInput("");setShowWeightModal(false);}}} style={c.btn("#ff6b35","#000")}>SAVE</button>
         </Modal>
       )}
       {showPRModal&&(
         <Modal onClose={()=>setShowPRModal(false)} title="LOG PR" titleColor="#4ecdc4">
-          <div style{{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-            {LIFTS.map(l=><button key={l} onClick={()=>setPrLift(l)} style{{whiteSpace:"nowrap",padding:"7px 11px",background:prLift===l?"#4ecdc4":"#1a1a1a",border:prLift===l?"none":"1px solid #2a2a2a",borderRadius:8,color:prLift===l?"#000":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
+          <div style={{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+            {LIFTS.map(l=><button key={l} onClick={()=>setPrLift(l)} style={{whiteSpace:"nowrap",padding:"7px 11px",background:prLift===l?"#4ecdc4":"#1a1a1a",border:prLift===l?"none":"1px solid #2a2a2a",borderRadius:8,color:prLift===l?"#000":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
           </div>
           <input type="number" value={prInput} onChange={e=>setPrInput(e.target.value)} placeholder="Weight in lbs" style={{...c.inp("#4ecdc4"),fontSize:24,fontWeight:700,marginBottom:12}}/>
           <button onClick={()=>{if(prInput){setPrs(p=>({...p,[tKey]:{...(p[tKey]||{}),[prLift]:parseFloat(prInput)}}));setPrInput("");setShowPRModal(false);}}} style={c.btn("#4ecdc4","#000")}>SAVE PR</button>
@@ -790,13 +792,13 @@ function App(){
       )}
       {showRunModal&&(
         <Modal onClose={()=>setShowRunModal(false)} title={`LOG RUN - ${selDay.toUpperCase()}`} titleColor="#45b7d1">
-          <div style{{display:"flex",gap:8,marginBottom:12}}>
-            <div style{{flex:1}}>
-              <div style{{fontSize:8,color:"#45b7d1",letterSpacing:1,marginBottom:5}}>MILES</div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:8,color:"#45b7d1",letterSpacing:1,marginBottom:5}}>MILES</div>
               <input type="number" value={runMiles} onChange={e=>setRunMiles(e.target.value)} placeholder="5.2" style={{...c.inp("#45b7d1"),fontSize:22,fontWeight:700}}/>
             </div>
-            <div style{{flex:1}}>
-              <div style{{fontSize:8,color:"#96ceb4",letterSpacing:1,marginBottom:5}}>PACE (min/mi)</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:8,color:"#96ceb4",letterSpacing:1,marginBottom:5}}>PACE (min/mi)</div>
               <input value={runPace} onChange={e=>setRunPace(e.target.value)} placeholder="8:30" style={{...c.inp("#96ceb4"),fontSize:22,fontWeight:700}}/>
             </div>
           </div>
