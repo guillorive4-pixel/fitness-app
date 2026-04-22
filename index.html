@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Guillermo — Fitness Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#090909;font-family:'Courier New',monospace;}
+  ::-webkit-scrollbar{width:0;height:0;}
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+  textarea::placeholder,input::placeholder{color:#383838;}
+  @keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const PROGRAM_START = new Date("2026-06-01");
+const PROGRAM_END   = new Date("2026-07-02");
+const DAYS  = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const MEALS = ["Breakfast","Lunch","Snack","Dinner"];
+const LIFTS = ["Bench Press","Squat","Deadlift","Overhead Press","Barbell Curl"];
+
+const WEEK_PHASES = {
+  1:{label:"Reset & Establish",desc:"First week at internship. Build the habit.",dates:"Jun 1-7"},
+  2:{label:"Load Up",desc:"Add weight to every lift vs Week 1.",dates:"Jun 8-14"},
+  3:{label:"Peak Intensity",desc:"Heaviest week. Last set close to failure.",dates:"Jun 15-21"},
+  4:{label:"Deload + Peak",desc:"Lower volume, same weight. Look your best.",dates:"Jun 22-Jul 2"},
+};
+
+const WORKOUTS = {
+  Monday:   {name:"Push",     color:"#ff6b35",exercises:["Incline bench 4x8","Overhead press 4x8","Lateral raises 5x15","Weighted dips 4x8","Tricep pushdown 4x12","Cable fly 3x12"]},
+  Tuesday:  {name:"Pull",     color:"#4ecdc4",exercises:["Pull-ups 4x max","Barbell row 4x8","Cable row 4x10","Face pulls 4x15","Barbell curl 4x8","Hammer curl 3x12"]},
+  Wednesday:{name:"Run",      color:"#45b7d1",exercises:["5+ mile run","Track pace & distance","Post-run stretch 10min"]},
+  Thursday: {name:"Legs+Core",color:"#96ceb4",exercises:["Squat 4x8","Romanian deadlift 4x8","Leg press 4x10","Lunges 3x12 each","Hanging leg raises 4x15","Plank 4x50sec"]},
+  Friday:   {name:"Arms",     color:"#ffeaa7",exercises:["Close-grip bench 4x8","Overhead tricep ext 4x10","Incline dumbbell curl 4x8","Hammer curl 4x10","Lateral raises 5x15","Cable curl+pushdown 4x15"]},
+  Saturday: {name:"Run",      color:"#45b7d1",exercises:["5+ mile run","Easy pace recovery","Post-run stretch 10min"]},
+  Sunday:   {name:"Rest+Prep",color:"#dda0dd",exercises:["Full rest","Meal prep (chicken+rice+eggs)","Pack gym bag","Sleep by 10:30pm"]},
+};
+
+const FOOD_DB = [
+  {id:"f1", name:"Chicken Breast",     protein:25,cal:165,unit:"100g"},
+  {id:"f2", name:"Skirt Steak",        protein:23,cal:185,unit:"100g"},
+  {id:"f3", name:"Salmon",             protein:22,cal:208,unit:"100g"},
+  {id:"f4", name:"Ground Beef 80/20",  protein:17,cal:254,unit:"100g"},
+  {id:"f5", name:"Canned Tuna",        protein:30,cal:120,unit:"120g can"},
+  {id:"f6", name:"Whole Egg",          protein:6, cal:70, unit:"1 egg"},
+  {id:"f7", name:"Egg White",          protein:4, cal:17, unit:"1 white"},
+  {id:"f8", name:"Greek Yogurt",       protein:20,cal:150,unit:"200g"},
+  {id:"f9", name:"Mozzarella",         protein:11,cal:148,unit:"50g"},
+  {id:"f10",name:"White Rice (cooked)",protein:3, cal:130,unit:"100g"},
+  {id:"f11",name:"Pasta (cooked)",     protein:5, cal:160,unit:"100g"},
+  {id:"f12",name:"Sweet Potato",       protein:2, cal:86, unit:"100g"},
+  {id:"f13",name:"Black Beans",        protein:9, cal:132,unit:"100g"},
+  {id:"f14",name:"Arroz con Gandules", protein:4, cal:160,unit:"100g"},
+  {id:"f15",name:"Pernil",             protein:24,cal:280,unit:"100g"},
+  {id:"f16",name:"Tostones",           protein:1, cal:150,unit:"3 pieces"},
+  {id:"f17",name:"Avocado",            protein:1, cal:120,unit:"half"},
+  {id:"f18",name:"Whole Wheat Toast",  protein:4, cal:80, unit:"1 slice"},
+  {id:"f19",name:"Banana",             protein:1, cal:105,unit:"1 medium"},
+  {id:"f20",name:"Granola",            protein:5, cal:220,unit:"50g"},
+  {id:"f21",name:"Nutella",            protein:1, cal:80, unit:"1 tbsp"},
+  {id:"f22",name:"Almonds",            protein:6, cal:174,unit:"30g"},
+  {id:"f23",name:"Olive Oil",          protein:0, cal:120,unit:"1 tbsp"},
+  {id:"f24",name:"Cherry Tomatoes",    protein:1, cal:18, unit:"100g"},
+  {id:"f25",name:"Arugula",            protein:1, cal:13, unit:"50g"},
+  {id:"f26",name:"Sushi Roll",         protein:15,cal:280,unit:"8 pieces"},
+  {id:"f27",name:"Pizza Slice",        protein:12,cal:285,unit:"1 slice"},
+  {id:"f28",name:"Protein Bar",        protein:20,cal:190,unit:"1 bar"},
+  {id:"f29",name:"Watermelon",         protein:1, cal:60, unit:"200g"},
+  {id:"f30",name:"Mango",              protein:1, cal:60, unit:"100g"},
+  {id:"f31",name:"Noodles (cooked)",   protein:4, cal:138,unit:"100g"},
+  {id:"f32",name:"Oats (dry)",         protein:5, cal:150,unit:"40g"},
+  {id:"f33",name:"Chicken Thigh",      protein:20,cal:210,unit:"100g"},
+  {id:"f34",name:"Milk (whole)",       protein:7, cal:122,unit:"200ml"},
+  {id:"f35",name:"Pork Chop",          protein:22,cal:231,unit:"100g"},
+];
+
+function getTodayName(){return DAYS[new Date().getDay()===0?6:new Date().getDay()-1;}
+function dateKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+function todayKey(){return dateKey(new Date());}
+function getWeekDates(offset=0){
+  const today=new Date(),day=today.getDay();
+  const mon=new Date(today);
+  mon.setDate(today.getDate()-(day===0?6:day-1)+offset*7);
+  return DAYS.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+function getProgramWeek(){const ms=new Date()-PROGRAM_START;if(ms<0)return 0;return Math.min(Math.floor(ms/(7*86400000))+1,4);}
+function getDaysLeft(){return Math.max(0,Math.ceil((PROGRAM_END-new Date())/86400000));}
+function fmtTime(s){return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;}
+function fmtSW(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60,cs=Math.floor((ms%1000)/10);return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${String(cs).padStart(2,"0")}`;}
+
+function useLS(key,def){
+  const[val,setVal]=useState(()=>{try{const s=localStorage.getItem(key);return s?JSON.parse(s):def;}catch{return def;}});
+  useEffect(()=>{try{localStorage.setItem(key,JSON.stringify(val));}catch{}},[key,val]);
+  return[val,setVal];
+}
+
+const c={
+  app:{minHeight:"100vh",background:"#090909",color:"#f0f0f0",fontFamily:"'Courier New',monospace",maxWidth:480,margin:"0 auto"},
+  card:{background:"#111",border:"1px solid #1e1e1e",borderRadius:14,padding:14,marginBottom:12},
+  btn:(bg,col)=>({background:bg,border:"none",borderRadius:10,color:col,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Courier New',monospace",letterSpacing:1,padding:"11px",width:"100%"}),
+  sbtn:(bg,bdr,col)=>({background:bg,border:bdr,borderRadius:8,color:col,fontSize:10,padding:"5px 10px",cursor:"pointer",fontFamily:"'Courier New',monospace"}),
+  inp:(col)=>({width:"100%",background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:10,color:col,fontSize:13,padding:"11px 13px",fontFamily:"'Courier New',monospace",outline:"none",boxSizing:"border-box"}),
+};
+
+function App(){
+  const[tab,setTab]=useState("today");
+  const[selDay,setSelDay]=useState(getTodayName());
+  const[weekOff,setWeekOff]=useState(0);
+  const[exercises,setExercises]=useLS("g_ex",{});
+  const[dailyRules,setDailyRules]=useLS("g_rules",{});
+  const[foodLog,setFoodLog]=useLS("g_food",{});
+  const[customEx,setCustomEx]=useLS("g_cex",{});
+  const[weights,setWeights]=useLS("g_weights",{});
+  const[prs,setPrs]=useLS("g_prs",{});
+  const[runs,setRuns]=useLS("g_runs",{});
+  const[waterLog,setWaterLog]=useLS("g_water",{});
+  const[mealChecks,setMealChecks]=useLS("g_mealck",{});
+  const[customRules,setCustomRules]=useLS("g_crules",[]);
+  const[aiMsgs,setAiMsgs]=useLS("g_coach",[{role:"assistant",content:"Yo Guillermo - 4-week program Jun 1 to Jul 2. Ask me anything about workouts, food, or staying consistent."}]);
+  const[foodTab,setFoodTab]=useState("search");
+  const[searchQ,setSearchQ]=useState("");
+  const[activeMeal,setActiveMeal]=useState("Breakfast");
+  const[aiFoodIn,setAiFoodIn]=useState("");
+  const[aiEstLoad,setAiEstLoad]=useState(false);
+  const[aiEstRes,setAiEstRes]=useState(null);
+  const[showExModal,setShowExModal]=useState(false);
+  const[exInput,setExInput]=useState("");
+  const[showWeightModal,setShowWeightModal]=useState(false);
+  const[weightInput,setWeightInput]=useState("");
+  const[showPRModal,setShowPRModal]=useState(false);
+  const[prLift,setPrLift]=useState(LIFTS[0]);
+  const[prInput,setPrInput]=useState("");
+  const[showRunModal,setShowRunModal]=useState(false);
+  const[runMiles,setRunMiles]=useState("");
+  const[runPace,setRunPace]=useState("");
+  const[showRuleModal,setShowRuleModal]=useState(false);
+  const[ruleInput,setRuleInput]=useState("");
+  const[timerMode,setTimerMode]=useState("rest");
+  const[restSecs,setRestSecs]=useState(90);
+  const[restRemain,setRestRemain]=useState(90);
+  const[restRunning,setRestRunning]=useState(false);
+  const[restDone,setRestDone]=useState(false);
+  const[swMs,setSwMs]=useState(0);
+  const[swRunning,setSwRunning]=useState(false);
+  const[swLaps,setSwLaps]=useState([]);
+  const swRef=useRef(null),swStart=useRef(0),swBase=useRef(0),restRef=useRef(null);
+  const[aiIn,setAiIn]=useState("");
+  const[aiLoad,setAiLoad]=useState(false);
+  const chatEnd=useRef(null);
+
+  useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth"});},[aiMsgs]);
+
+  useEffect(()=>{
+    if(restRunning){
+      restRef.current=setInterval(()=>{
+        setRestRemain(p=>{
+          if(p<=1){clearInterval(restRef.current);setRestRunning(false);setRestDone(true);return 0;}
+          return p-1;
+        });
+      },1000);
+    }else clearInterval(restRef.current);
+    return()=>clearInterval(restRef.current);
+  },[restRunning]);
+
+  useEffect(()=>()=>{clearInterval(swRef.current);clearInterval(restRef.current);},[]);
+
+  const startRest=(s)=>{setRestSecs(s);setRestRemain(s);setRestRunning(true);setRestDone(false);};
+  const resetRest=()=>{setRestRunning(false);setRestRemain(restSecs);setRestDone(false);};
+  const startSw=()=>{swBase.current=swMs;swStart.current=Date.now();swRef.current=setInterval(()=>setSwMs(swBase.current+(Date.now()-swStart.current)),50);setSwRunning(true);};
+  const stopSw=()=>{clearInterval(swRef.current);setSwRunning(false);swBase.current=swMs;};
+  const lapSw=()=>setSwLaps(p=>[...p,swMs]);
+  const resetSw=()=>{clearInterval(swRef.current);setSwRunning(false);setSwMs(0);setSwLaps([]);swBase.current=0;};
+
+  const weekDates=getWeekDates(weekOff);
+  const selDate=weekDates[DAYS.indexOf(selDay)];
+  const selKey=dateKey(selDate);
+  const tKey=todayKey();
+
+  const getDayLog=k=>foodLog[k]||[];
+  const addFood=(k,meal,food,qty=1)=>{const e={id:`${Date.now()}-${Math.random()}`,name:food.name,protein:food.protein,cal:food.cal,qty,meal};setFoodLog(p=>({...p,[k]:[...(p[k]||[]),e]}));setAiEstRes(null);};;
+  const removeFood=(k,id)=>setFoodLog(p=>({...p,[k]:(p[k]||[]).filter(e=>e.id!==id)}));
+  const updateQty=(k,id,q)=>setFoodLog(p=>({...p,[k]:(p[k]||[]).map(e=>e.id===id?{...e,qty:Math.max(0.5,Math.min(20,parseFloat(q)||1))}:e)}));
+  const getDayMacros=k=>{const log=getDayLog(k);return{cal:Math.round(log.reduce((s,e)=>s+e.cal*e.qty,0)),protein:Math.round(log.reduce((s,e)=>s+e.protein*e.qty,0))};};
+
+  const toggleEx=(day,ex)=>setExercises(p=>({...p,[`${day}-${ex}`]:!p[`${day}-${ex}`]}));
+  const getDayExs=day=>[...(WORKOUTS[day]?.exercises||[]),...(customEx[day]||[])];
+  const getProgress=day=>{const all=getDayExs(day);if(!all.length)return 0;return Math.round(all.filter(e=>exercises[`${day}-${e}`]).length/all.length*100);};
+  const addCustEx=()=>{if(!exInput.trim())return;setCustomEx(p=>({...p,[selDay]:[...(p[selDay]||[]),exInput.trim()]}));setExInput("");setShowExModal(false);};
+
+  const water=waterLog[selKey]||0;
+  const addWater=()=>setWaterLog(p=>({...p,[selKey]:(p[selKey]||0)+1}));
+  const subWater=()=>setWaterLog(p=>({...p,[selKey]:Math.max(0,(p[selKey]||0)-1)}));
+
+  const addRule=()=>{if(!ruleInput.trim())return;setCustomRules(p=>[...p,ruleInput.trim()]);setRuleInput("");setShowRuleModal(false);};
+
+  const getStreak=()=>{
+    if(!customRules?.length)return 0;
+    let streak=0,d=new Date();
+    for(let i=0;i<30;i++){
+      const k=dateKey(d);
+      if(customRules.filter(r=>dailyRules[`${k}-${r}`]).length===customRules.length)streak++;
+      else if(i>0)break;
+      d.setDate(d.getDate()-1);
+    }
+    return streak;
+  };
+  const weekMiles=()=>getWeekDates(weekOff).reduce((s,d)=>{const r=runs[dateKey(d)];return s+(r?.miles||0);},0);
+
+  const estimateFood=async()=>{
+    if(!aiFoodIn.trim()||aiEstLoad)return;
+    setAiEstLoad(true);setAiEstRes(null);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":"placeholder","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:300,
+          system:'Nutrition expert. User describes food. Return ONLY valid JSON: {"name":"...","protein":number,"cal":number,"unit":"...","confidence":"high|medium|low"}. No markdown.',
+          messages:[{role:"user",content:aiFoodIn}]}),
+      });
+      const data=await res.json();
+      const text=data.content?.[0]?.text?.replace(/```json|```/g,"").trim()||"{}";
+      setAiEstRes(JSON.parse(text));
+    }catch{setAiEstRes({error:true});}
+    setAiEstLoad(false);
+  };
+
+  const sendCoach=async()=>{
+    if(!aiIn.trim()||aiLoad)return;
+    const userMsg={role:"user",content:aiIn};
+    const msgs=[...aiMsgs,userMsg];
+    setAiMsgs(msgs);setAiIn("");setAiLoad(true);
+    const m=getDayMacros(tKey);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":"placeholder","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:800,
+          system:`Personal fitness coach for Guillermo, 18yo Puerto Rico. In Spain, DePuy Synthes internship Jun 1. 5'10" ~155lbs ~18% BF. Goal: look great by Jul 2. Runs 5+ miles, trains 6am. Targets: 165g protein, 2200-2400 cal/day. Today: ${m.protein}g protein, ${m.cal} cal. Streak: ${getStreak()} days. 4-week program Jun 1-Jul 2. Direct, no fluff, real coach energy.`,
+          messages:msgs.map(m=>({role:m.role,content:m.content}))}),
+      });
+      const data=await res.json();
+      setAiMsgs(p=>[...p,{role:"assistant",content:data.content?.[0]?.text||"Something went wrong."}]);
+    }catch{setAiMsgs(p=>[...p,{role:"assistant",content:"Connection error. Try again."}]);}
+    setAiLoad(false);
+  };
+
+  const macros=getDayMacros(selKey),todayMac=getDayMacros(tKey),workout=WORKOUTS[selDay];
+  const prog=getProgress(selDay);
+  const protPct=Math.min((macros.protein/165)*100,100);
+  const calPct=Math.min((macros.cal/2400)*100,100);
+  const streak=getStreak(),progWeek=getProgramWeek(),phase=WEEK_PHASES[progWeek]||WEEK_PHASES[1];
+  const filtered=FOOD_DB.filter(f=>f.name.toLowerCase().includes(searchQ.toLowerCase())).slice(0,12);
+  const restPct=((restSecs-restRemain)/restSecs)*100;
+
+  const DayPicker=()=>
+    <div style={{display:"flex",gap:5,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
+      {DAYS.map((day,i)=>{
+        const isTd=day===getTodayName(),isSel=day===selDay;
+        return(
+          <button key={day} onClick={()=>setSelDay(day)} style={{minWidth:44,padding:"6px 3px",background:isSel?"#ff6b35":isTd?"#1a1a1a":"transparent",border:isTd&&!isSel?"1px solid #333":"1px solid transparent",borderRadius:9,color:isSel?"#000":isTd?"#fff":"#999",cursor:"pointer",fontFamily:"inherit"}}>
+            <div style={{fontSize:7,letterSpacing:1}}>{day.slice(0,3).toUpperCase()}</div>
+            <div style={{fontSize:13,fontWeight:700}}>{weekDates[i].getDate()}</div>
+          </button>
+        );
+      })}
+    </div>;
+
+  const CheckRow=({done,onToggle,label,color="#4ecdc4"})=>
+    <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #1a1a1a",cursor:"pointer"}}>
+      <div style={{width:20,height:20,borderRadius:5,border:done?"none":"2px solid #2a2a2a",background:done?color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s"}}>
+        {done&&<span style={{fontSize:11,color:"#000"}}>✓</span>}
+      </div>
+      <span style={{fontSize:13,color:done?"#666":"#ccc",textDecoration:done?"line-through":"none",flex:1}}>{label}</span>
+    </div>;
+
+  const Modal=({onClose,title,titleColor="#ff6b35",children})=>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,margin:"0 auto",background:"#111",borderRadius:"20px 20px 0 0",padding:"22px 18px 44px",border:"1px solid #2a2a2a"}}>
+        <div style={{fontSize:9,color:titleColor,letterSpacing:2,marginBottom:14}}>{title}</div>
+        {children}
+      </div>
+    </div>;
+
+  return(
+    <div style={c.app}>
+      {/* HEADER */}
+      <div style={{padding:"16px 16px 12px",background:"linear-gradient(180deg,#121212 0%,#090909 100%)",borderBottom:"1px solid #1a1a1a"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:8,color:"#888",letterSpacing:3}}>4-WEEK PROGRAM · JUN 1 TO JUL 2</div>
+            <div style={{fontSize:20,fontWeight:700,color:"#fff",letterSpacing:-0.5}}>GUILLERMO</div>
+          </div>
+          <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+            {streak>0&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#ffeaa7"}}>{streak}</div><div style={{fontSize:7,color:"#999"}}>STREAK</div></div>}
+            <div style={{textAlign:"right"}}><div style={{fontSize:20,fontWeight:700,color:"#ff6b35",lineHeight:1}}>{getDaysLeft()}</div><div style={{fontSize:7,color:"#999"}}>DAYS LEFT</div></div>
+          </div>
+        </div>
+        {progWeek>=1&&progWeek<=4&&(
+          <div style={{background:"#ff6b3510",border:"1px solid #ff6b3525",borderRadius:10,padding:"7px 12px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:7,color:"#ff6b35",letterSpacing:2}}>WEEK {progWeek} — {phase.dates}</div>
+              <div style={{fontSize:11,fontWeight:600,color:"#fff"}}>{phase.label}</div>
+              <div style={{fontSize:9,color:"#888"}}>{phase.desc}</div>
+            </div>
+            <div style={{display:"flex",gap:3}}>{[1,2,3,4].map(w=><div key={w} style={{width:7,height:7,borderRadius:"50%",background:w<=progWeek?"#ff6b35":"#2a2a2a"}}/>)}</div>
+          </div>
+        )}
+        {/* Macro panel */}
+        <div style={{background:"#111",borderRadius:16,padding:"14px 14px 12px",border:"1px solid #222"}}>
+          <div style={{fontSize:8,color:"#888",letterSpacing:3,marginBottom:10}}>TODAY'S NUTRITION</div>
+          <div style={{display:"flex",gap:10,marginBottom:10}}>
+            <div style={{flex:1,background:todayMac.protein>=165?"#4ecdc415":"#1a1a1a",borderRadius:14,padding:"14px 12px",border:`2px solid ${todayMac.protein>=165?"#4ecdc4":"#2a2a2a"}`}}>
+              <div style={{fontSize:9,color:"#4ecdc4",letterSpacing:2,marginBottom:4}}>PROTEIN</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+                <div style={{fontSize:38,fontWeight:700,color:todayMac.protein>=165?"#4ecdc4":"#fff",lineHeight:1}}>{todayMac.protein}</div>
+                <div style={{fontSize:15,color:"#aaa",fontWeight:600}}>g</div>
+              </div>
+              <div style={{fontSize:10,color:"#888",marginTop:4}}>of 165g · <span style={{color:todayMac.protein>=165?"#4ecdc4":"#ff6b35",fontWeight:600}}>{Math.max(0,165-todayMac.protein)}g left</span></div>
+              <div style={{marginTop:8,height:6,background:"#0d0d0d",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.min((todayMac.protein/165)*100,100)}%`,background:todayMac.protein>=165?"#4ecdc4":"#ff6b35",borderRadius:3,transition:"width 0.5s ease"}}/>
+              </div>
+            </div>
+            <div style={{flex:1,background:todayMac.cal>2400?"#ff444415":"#1a1a1a",borderRadius:14,padding:"14px 12px",border:`2px solid ${todayMac.cal>2400?"#ff4444":todayMac.cal>2000?"#ffeaa7":"#2a2a2a"}`}}>
+              <div style={{fontSize:9,color:"#ffeaa7",letterSpacing:2,marginBottom:4}}>CALORIES</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+                <div style={{fontSize:38,fontWeight:700,color:todayMac.cal>2400?"#ff4444":"#fff",lineHeight:1}}>{todayMac.cal}</div>
+                <div style={{fontSize:15,color:"#aaa",fontWeight:600}}>k</div>
+              </div>
+              <div style={{fontSize:10,color:"#888",marginTop:4}}>of 2400 · <span style={{color:todayMac.cal>2400?"#ff4444":"#ffeaa7",fontWeight:600}}>{Math.max(0,2400-todayMac.cal)} left</span></div>
+              <div style={{marginTop:8,height:6,background:"#0d0d0d",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.min((todayMac.cal/2400)*100,100)}%`,background:todayMac.cal>2400?"#ff4444":"#ffeaa7",borderRadius:3,transition:"width 0.5s ease"}}/>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:"#0d0d0d",borderRadius:10,padding:"9px 10px",border:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:32,height:32,borderRadius:8,background:"#ff6b3520",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"#ff6b35",fontWeight:700}}>W</div>
+              <div><div style={{fontSize:16,fontWeight:700,color:"#ff6b35",lineHeight:1}}>{getProgress(getTodayName())}%</div><div style={{fontSize:8,color:"#999",marginTop:1}}>{WORKOUTS[getTodayName()]?.name||"REST"}</div></div>
+            </div>
+            <div style={{flex:1,background:"#0d0d0d",borderRadius:10,padding:"9px 10px",border:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:32,height:32,borderRadius:8,background:"#45b7d120",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"#45b7d1",fontWeight:700}}>H</div>
+              <div><div style={{fontSize:16,fontWeight:700,color:"#45b7d1",lineHeight:1}}>{water}<span style={{fontSize:10,color:"#888"}}>/8</span></div><div style={{fontSize:8,color:"#999",marginTop:1}}>bottles · {water*12} fl oz</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",background:"#090909",position:"sticky",top:0,zIndex:20}}>
+        {[ ["today","Today"],["food","Food"],["timer","Timer"],["stats","Stats"],["coach","Coach"] ].map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"12px 2px",background:"none",border:"none",borderBottom:tab===id?"2px solid #ff6b35":"2px solid transparent",color:tab===id?"#ff6b35":"#888",fontSize:9,letterSpacing:1.5,textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"}}>{label}</button>
+        ))}
+      </div>
+
+      <div style={{padding:16,paddingBottom:64}}>
+
+        {/* TODAY */}
+        {tab==="today"&&(
+          <div>
+            <DayPicker/>
+            {/* Water */}
+            <div style={{...c.card,border:"1px solid #45b7d122"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:9,color:"#45b7d1",letterSpacing:2}}>WATER INTAKE</div>
+                  <div style={{fontSize:10,color:"#888",marginTop:2}}>{water*12} fl oz / 96 fl oz</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <button onClick={subWater} style={{width:30,height:30,borderRadius:8,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
+                  <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:700,color:"#45b7d1"}}>{water}</div><div style={{fontSize:7,color:"#999"}}>bottles</div></div>
+                  <button onClick={addWater} style={{width:30,height:30,borderRadius:8,background:"#45b7d130",border:"1px solid #45b7d144",color:"#45b7d1",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:5,justifyContent:"center"}}>
+                {Array.from({length:8}).map((_,i)=>{
+                  const filled=i<water;
+                  return(
+                    <div key={i} onClick={()=>{if(i<water)subWater();else addWater();}} style={{cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                      <div style={{position:"relative",width:26,height:50}}>
+                        <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:6,borderRadius:"3px 3px 0 0",background:filled?"#45b7d1":"#2a2a2a"}}/>
+                        <div style={{position:"absolute",top:5,left:"50%",transform:"translateX(-50%)",width:10,height:5,background:filled?"#45b7d199":"#1e1e1e"}}/>
+                        <div style={{position:"absolute",top:10,left:0,right:0,bottom:0,borderRadius:6,border:`1.5px solid ${filled?"#45b7d155":"#2a2a2a"}`,background="#0d0d0d",overflow:"hidden"}}>
+                          <div style={{position:"absolute",bottom:0,left:0,right:0,height:filled?"100%":"0%",background:"#45b7d1cc",transition:"height 0.4s ease",borderRadius:"0 0 5px 5px"}}/>
+                          <div style={{position:"absolute",top:3,left:3,width:3,height:12,borderRadius:2,background:"white",opacity:filled?0.2:0.05}}/>
+                        </div>
+                      </div>
+                      <div style={{fontSize:7,color:filled?"#45b7d1":"#444",fontWeight:filled?600:400}}>12oz</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Workout */}
+            <div style={{...c.card,border:`1px solid ${workout.color}22`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:9,color:"#999",letterSpacing:2}}>WORKOUT</div>
+                  <div style={{fontSize:17,fontWeight:700,color:workout.color}}>{workout.name}</div>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <button onClick={()=>setShowExModal(true)} style={{background:`${workout.color}20`,border:`1px solid ${workout.color}40`,borderRadius:8,color:workout.color,fontSize:10,padding:"4px 9px",cursor:"pointer",fontFamily:"inherit"}}>+ ADD</button>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:`${workout.color}15`,border:`2px solid ${workout.color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:workout.color}}>{prog}%
+                  </div>
+                </div>
+              </div>
+              {getDayExs(selDay).map((ex)=>(
+                <CheckRow key={ex} done={exercises[`${selDay}-${ex}`]} onToggle={()=>toggleEx(selDay,ex)} label={ex} color={workout.color}/>
+              ))}
+              <button onClick={()=>setTab("timer")} style={{width:"100%",marginTop:12,padding:"8px",background:`${workout.color}12`,border:`1px solid ${workout.color}25`,borderRadius:10,color:workout.color,fontSize:9,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>OPEN REST TIMER</button>
+            </div>
+            {/* Daily Rules */}
+            <div style={c.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style={{fontSize:9,color:"#999",letterSpacing:2}}>DAILY RULES</div>
+                <button onClick={()=>setShowRuleModal(true)} style={c.sbtn("#ff6b3520","1px solid #ff6b3540","#ff6b35")}>+ ADD</button>
+              </div>
+              {customRules.length===0&&(
+                <div style={{textAlign:"center",padding:"20px 0",color:"#444",fontSize:12,border:"1px dashed #222",borderRadius:10}}>
+                  No rules yet — tap + ADD to create your first
+                </div>
+              )}
+              {customRules.map((rule,idx)=>(
+                <div key={idx} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #1a1a1a"}}>
+                  <div onClick={()=>setDailyRules(p=>({...p,[`${selKey}-${rule}`]:!p[`${selKey}-${rule}`]}))} style={{width:20,height:20,borderRadius:5,border:dailyRules[`${selKey}-${rule}`]?"none":"2px solid #2a2a2a",background:dailyRules[`${selKey}-${rule}`]?"#4ecdc4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer",transition:"all 0.2s"}}>
+                    {dailyRules[`${selKey}-${rule}`]&&<span style={{fontSize:11,color:"#000"}}>✓</span>}
+                  </div>
+                  <span style={{flex:1,fontSize:13,color:dailyRules[`${selKey}-${rule}`]?"#666":"#ccc",textDecoration:dailyRules[`${selKey}-${rule}`]?"line-through":"none"}}>{rule}</span>
+                  <button onClick={()=>setCustomRules(p=>p.filter((_,i)=>i!==idx))} style={{background:"none",border:"none",color:"#444",fontSize:14,cursor:"pointer"}}>x</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FOOD */}
+        {tab==="food"&&(
+          <div>
+            <DayPicker/>
+            <div style={c.card}>
+              <div style={{display:"flex",justifyContent:"space-around",marginBottom:10}}>
+                {[{v:`${macros.protein}g`,l:"PROTEIN",s:`${Math.max(0,165-macros.protein)}g left`,col:macros.protein>=165?"#4ecdc4":"#fff"},{v:`${macros.cal}",l:"CALORIES",s:`${Math.max(0,2400-macros.cal)} left`,col:macros.cal>2400?"#ff4444":"#fff"},{v:getDayLog(selKey).length,l:"ITEMS",s:"logged",col:"#96ceb4"}].map(s=>(
+                  <div key={s.l} style={{textAlign:"center"}}>
+                    <div style={{fontSize:20,fontWeight:700,color:s.col}}>{s.v}</div>
+                    <div style={{fontSize:9,color:"#999"}}>{s.l}</div>
+                    <div style{{fontSize:9,color:"#aaa"}}>{s.s}</div>
+                  </div>
+                ))}
+              </div>
+              {[ ["PROTEIN",protPct,protPct>=100?"#4ecdc4":"#ff6b35"],["CALORIES",calPct,calPct>=100?"#ff4444":"#ffeaa7"] ].map(([l,p,col])=>(
+                <div key={l} style{{marginBottom:4}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:7,color:"#888",marginBottom:2}}><span>{l}</span><span>{Math.min(Math.round(p),100)}%</span></div>
+                  <div style{{height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style{{height:"100%",width:`${Math.min(p,100)}%`,background:col,borderRadius:2,transition:"width 0.4s"}}/></div>
+                </div>
+              ))}
+            </div>
+            <div style{{display:"flex",gap:5,marginBottom:10}}>
+              {[ ["search","Search"],["ai","AI Estimate"],["checklist","Meals"] ].map(([id,label])=>(
+                <button key={id} onClick={()=>setFoodTab(id)} style={{flex:1,padding:"9px 4px",background:foodTab===id?"#ff6b35":"#111",border:foodTab===id?"none":"1px solid #1e1e1e",borderRadius:10,color:foodTab===id?"#000":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit",fontWeight:foodTab===id?700:400}}>{label}</button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:5,marginBottom:12}}>
+              {MEALS.map(m=>(
+                <button key={m} onClick={()=>setActiveMeal(m)} style={{flex:1,padding:"7px 4px",background:activeMeal===m?"#1e1e1e":"transparent",border:activeMeal===m?"1px solid #333":"1px solid #1a1a1a",borderRadius:8,color:activeMeal===m?"#fff":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{m}</button>
+              ))}
+            </div>
+            {foodTab==="search"&&(
+              <div>
+                <div style={{background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+                  <span style{{color:"#888",fontSize:11}}>search</span>
+                  <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="chicken, rice, steak..." style={{flex:1,background:"none",border:"none",outline:"none",color:"#fff",fontSize:13,fontFamily:"inherit"}}/>
+                  {searchQ&&<button onClick={()=>setSearchQ("")} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:13}}>x</button>}
+                </div>
+                <div style{{display:"flex",flexDirection:"column",gap:6}}>
+                  {(searchQ?filtered:FOOD_DB.slice(0,12)).map(food=>(
+                    <div key={food.id} style={{display:"flex",alignItems:"center",gap:10,background:"#111",border:"1px solid #1e1e1e",borderRadius:11,padding:"10px 12px"}}>
+                      <div style{{width:38,height:38,borderRadius:8,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#ff6b35",fontWeight:700,flexShrink:0}}>{food.protein}g</div>
+                      <div style{{flex:1}}>
+                        <div style{{fontSize:12,color:"#ddd"}}>{food.name}</div>
+                        <div style{{fontSize:9,color:"#999"}}>{food.cal} kcal · {food.protein}g protein · per {food.unit}</div>
+                      </div>
+                      <button onClick={()=>addFood(selKey,activeMeal,food)} style{{background:"#ff6b35",border:"none",borderRadius:8,color:"#000",fontSize:18,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:700}}>+</button>
+                    </div>
+                  ))}
+                  {searchQ&&filtered.length===0&&<div style{{textAlign:"center",color:"#888",fontSize:12,padding:20}}>No results — try AI Estimate</div>}
+                </div>
+              </div>
+            )}
+            {foodTab==="ai"&&(
+              <div>
+                <div style={c.card}>
+                  <div style{{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:8}}>DESCRIBE WHAT YOU ATE</div>
+                  <textarea value={aiFoodIn} onChange={e=>setAiFoodIn(e.target.value)} placeholder='e.g. "200g pernil with arroz con gandules and 2 tostones"' style{{width:"100%",background:"#0d0d0d",border:"1px solid #2a2a2a",borderRadius:10,color:"#fff",fontSize:13,padding:"10px 12px",fontFamily:"inherit",outline:"none",resize:"none",height:72,boxSizing:"border-box",lineHeight:1.5}}/>
+                  <button onClick={estimateFood} disabled={aiEstLoad} style={{...c.btn(aiFoodIn.trim()?"#ff6b35":"#1a1a1a",aiFoodIn.trim()?"#000":"#888"),marginTop:10,cursor:aiFoodIn.trim()?"pointer":"default"}}>
+                    {aiEstLoad?"ESTIMATING...":"ESTIMATE MACROS"}
+                  </button>
+                </div>
+                {aiEstLoad&&<div style{{display:"flex",gap:4,justifyContent:"center",padding:12}}>{[0,1,2].map(i=><div key={i} style{{width:7,height:7,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/> )}</div>}
+                {aiEstRes&&!aiEstRes.error&&(
+                  <div style{{...c.card,border:"1px solid #ff6b3530"}}>
+                    <div style{{fontSize:9,color:"#ff6b35",letterSpacing:2,marginBottom:10}}>AI ESTIMATE · {aiEstRes.confidence} confidence</div>
+                    <div style{{marginBottom:12}}>
+                      <div style{{fontSize:14,fontWeight:600,color:"#fff"}}>{aiEstRes.name}</div>
+                      <div style{{fontSize:9,color:"#999"}}>per {aiEstRes.unit||"serving"}</div>
+                    </div>
+                    <div style{{display:"flex",gap:8,marginBottom:12}}>
+                      <div style{{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #4ecdc420"}}><div style{{fontSize:20,fontWeight:700,color:"#4ecdc4"}}>{aiEstRes.protein}g</div><div style{{fontSize:8,color:"#999"}}>PROTEIN</div></div>
+                      <div style{{flex:1,background:"#0d0d0d",borderRadius:10,padding:10,textAlign:"center",border:"1px solid #ffeaa720"}}><div style{{fontSize:20,fontWeight:700,color:"#ffeaa7"}}>{aiEstRes.cal}</div><div style{{fontSize:8,color:"#999"}}>CALORIES</div></div>
+                    </div>
+                    <button onClick={()=>{addFood(selKey,activeMeal,{id:`ai-${Date.now()}`,...aiEstRes});setAiFoodIn("");}} style={c.btn("#ff6b35","#000")}>ADD TO {activeMeal.toUpperCase()}</button>
+                  </div>
+                )}
+                {aiEstRes?.error&&<div style{{textAlign:"center",color:"#ff4444",fontSize:12,padding:16}}>Could not estimate. Be more specific.</div>}
+              </div>
+            )}
+            {foodTab==="checklist"&&(
+              <div>
+                {MEALS.map(meal=>{
+                  const mealLog=getDayLog(selKey).filter(e=>e.meal===meal);
+                  const done=mealChecks[`${selKey}-${meal}`];
+                  const mp=Math.round(mealLog.reduce((s,e)=>s+e.protein*e.qty,0));
+                  const mc=Math.round(mealLog.reduce((s,e)=>s+e.cal*e.qty,0));
+                  return(
+                    <div key={meal} style={c.card}>
+                      <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:mealLog.length?10:0}}>
+                        <div style{{display:"flex",alignItems:"center",gap:10}}>
+                          <div onClick={()=>setMealChecks(p=>({...p,[`${selKey}-${meal}`]:!p[`${selKey}-${meal}`]}))} style{{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #2a2a2a",background:done?"#4ecdc4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                            {done&&<span style{{fontSize:12,color:"#000"}}>✓</span>}
+                          </div>
+                          <div>
+                            <div style{{fontSize:13,fontWeight:600,color:done?"#666":"#fff",textDecoration:done?"line-through":"none"}}>{meal}</div>
+                            {mealLog.length>0&&<div style{{fontSize:9,color:"#999"}}>{mp}g protein · {mc} cal</div>}
+                          </div>
+                        </div>
+                        <button onClick={()=>{setFoodTab("search");setActiveMeal(meal);}} style={c.sbtn("#ff6b3515","1px solid #ff6b3530","#ff6b35")}>+ add</button>
+                      </div>
+                      {mealLog.map(entry=>(
+                        <div key={entry.id} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 0",borderTop:"1px solid #1a1a1a"}}>
+                          <div style{{flex:1,minWidth:0}}>
+                            <div style{{fontSize:11,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
+                            <div style{{fontSize:9,color:"#999"}}>{Math.round(entry.cal*entry.qty)} cal · {Math.round(entry.protein*entry.qty)}g protein</div>
+                          </div>
+                          <div style{{display:"flex",alignItems:"center",gap:3,flexShrink:0}}>
+                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty-0.5)} style{{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
+                            <span style{{fontSize:11,color:"#ff6b35",minWidth:24,textAlign:"center"}}>{entry.qty}x</span>
+                            <button onClick={()=>updateQty(selKey,entry.id,entry.qty+0.5)} style{{width:22,height:22,borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#aaa",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                            <button onClick={()=>removeFood(selKey,entry.id)} style{{width:22,height:22,background:"none",border:"none",color:"#888",fontSize:12,cursor:"pointer"}}>x</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TIMER */}
+        {tab==="timer"&&(
+          <div>
+            <div style{{display:"flex",gap:8,marginBottom:20}}>
+              {[ ["rest","Rest Timer"],["stopwatch","Stopwatch"] ].map(([id,label])=>(
+                <button key={id} onClick={()=>setTimerMode(id)} style{{flex:1,padding:10,background:timerMode===id?"#ff6b35":"#111",border:timerMode===id?"none":"1px solid #1e1e1e",borderRadius:12,color:timerMode===id?"#000":"#888",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:timerMode===id?700:400,letterSpacing:1}}>{label.toUpperCase()}</button>
+              ))}
+            </div>
+            {timerMode==="rest"&&(
+              <div style{{textAlign:"center"}}>
+                <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>REST BETWEEN SETS</div>
+                <div style{{display:"flex",gap:8,marginBottom:24,justifyContent:"center"}}>
+                  {[60,90,120,180].map(s=>(
+                    <button key={s} onClick={()=>{resetRest();setRestSecs(s);setRestRemain(s);}} style{{padding:"7px 12px",background:restSecs===s?"#ff6b35":"#111",border:restSecs===s?"none":"1px solid #2a2a2a",borderRadius:10,color:restSecs===s?"#000":"#888",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:restSecs===s?700:400}}>
+                      {s<60?`${s}s`:`${Math.floor(s/60)}m${s%60?s%60+"s":""}`}
+                    </button>
+                  ))}
+                </div>
+                <div style{{position:"relative",width:200,height:200,margin:"0 auto 24px"}}>
+                  <svg width="200" height="200" style{{transform:"rotate(-90deg)"}}>
+                    <circle cx="100" cy="100" r="88" fill="none" stroke="#1a1a1a" strokeWidth="8"/>
+                    <circle cx="100" cy="100" r="88" fill="none" stroke={restDone?"#4ecdc4":restRunning?"#ff6b35":"#333"} strokeWidth="8"
+                      strokeDasharray={`${2*Math.PI*88}`}
+                      strokeDashoffset={`${2*Math.PI*88*(restPct/100)}`}
+                      strokeLinecap="round"/>
+                  </svg>
+                  <div style{{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                    <div style{{fontSize:42,fontWeight:700,color:restDone?"#4ecdc4":"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtTime(restRemain)}</div>
+                    <div style{{fontSize:10,color:"#999"}}>{restDone?"REST DONE":restRunning?"RESTING...":"READY"}</div>
+                  </div>
+                </div>
+                <div style{{display:"flex",gap:12,justifyContent:"center"}}>
+                  <button onClick={resetRest} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
+                  <button onClick={()=>restRunning?resetRest():startRest(restSecs)} style{{width:72,height:72,borderRadius:"50%",background:restRunning?"#ff444433":"#ff6b35",border:restRunning?"2px solid #ff4444":"none",color:restRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+                    {restRunning?"■":"▶"}
+                  </button>
+                  <button onClick={()=>startRest(restSecs)} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>+SET</button>
+                </div>
+              </div>
+            )}
+            {timerMode==="stopwatch"&&(
+              <div style{{textAlign:"center"}}>
+                <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:20}}>STOPWATCH / RUN TIMER</div>
+                <div style{{fontSize:50,fontWeight:700,color:"#fff",letterSpacing:2,marginBottom:8}}>{fmtSW(swMs)}</div>
+                <div style{{fontSize:11,color:"#999",marginBottom:28}}>{swRunning?"RUNNING...":swMs>0?"PAUSED":"READY"}</div>
+                <div style{{display:"flex",gap:12,justifyContent:"center",marginBottom:24}}>
+                  <button onClick={resetSw} style{{width:56,height:56,borderRadius:"50%",background:"#111",border:"1px solid #2a2a2a",color:"#888",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↺</button>
+                  <button onClick={swRunning?stopSw:startSw} style{{width:72,height:72,borderRadius:"50%",background:swRunning?"#ff444433":"#ff6b35",border:swRunning?"2px solid #ff4444":"none",color:swRunning?"#ff4444":"#000",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+                    {swRunning?"■":"▶"}
+                  </button>
+                  <button onClick={lapSw} disabled={!swRunning} style{{width:56,height:56,borderRadius:"50%",background:swRunning?"#111":"#0d0d0d",border:"1px solid #2a2a2a",color:swRunning?"#aaa":"#333",fontSize:11,cursor:swRunning?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>LAP</button>
+                </div>
+                {swLaps.length>0&&(
+                  <div style={c.card}>
+                    <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>LAPS</div>
+                    {swLaps.map((lap,i)=>{
+                      const split=lap-(swLaps[i-1]||0);
+                      return(
+                        <div key={i} style{{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #1a1a1a"}}>
+                          <span style{{fontSize:11,color:"#888"}}>Lap {i+1}</span>
+                          <span style{{fontSize:11,color:"#45b7d1"}}>{fmtSW(split)}</span>
+                          <span style{{fontSize:11,color:"#999"}}>{fmtSW(lap)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <button onClick={()=>setShowRunModal(true)} style{{...c.btn("#45b7d115","#45b7d1"),border:"1px solid #45b7d130",marginTop:16}}>LOG THIS RUN</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STATS */}
+        {tab==="stats"&&(
+          <div>
+            <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <button onClick={()=>setWeekOff(p=>p-1)} style{{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+              <div style{{textAlign:"center"}}>
+                <div style{{fontSize:11,color:"#fff",fontWeight:600}}>{weekDates[0].toLocaleDateString("en",{month:"short",day:"numeric"})} - {weekDates[6].toLocaleDateString("en",{month:"short",day:"numeric"})}</div>
+                <div style{{fontSize:8,color:"#999"}}>{weekOff===0?"THIS WEEK":weekOff<0?`${Math.abs(weekOff)}w ago`:`${weekOff}w ahead`}</div>
+              </div>
+              <button onClick={()=>setWeekOff(p=>p+1)} style{{background:"#111",border:"1px solid #1e1e1e",borderRadius:8,color:"#aaa",fontSize:18,width:34,height:34,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+            </div>
+            <div style{{display:"flex",gap:8,marginBottom:14}}>
+              {[{v:weekDates.filter((_,i)=>getProgress(DAYS[i])===100).length,l:"Workouts",s:"completed",col:"#ff6b35"},{v:`${weekMiles().toFixed(1)}mi`,l:"Miles Run",s:"this week",col:"#45b7d1"},{v:weekDates.reduce((s,d)=>s+(waterLog[dateKey(d)]||0),0),l:"Bottles",s:"of water",col:"#4ecdc4"}].map(s=>(
+                <div key={s.l} style{{flex:1,...c.card,margin:0,textAlign:"center"}}>
+                  <div style{{fontSize:20,fontWeight:700,color:s.col}}>{s.v}</div>
+                  <div style{{fontSize:9,color:"#aaa"}}>{s.l}</div>
+                  <div style{{fontSize:8,color:"#999"}}>{s.s}</div>
+                </div>
+              ))}
+            </div>
+            <div style={c.card}>
+              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div><div style{{fontSize:9,color:"#999",letterSpacing:2}}>WEIGHT TRACKER</div><div style{{fontSize:15,fontWeight:700,color:"#fff"}}>{weights[tKey]?`${weights[tKey]} lbs`:"Not logged today"}</div></div>
+                <button onClick={()=>setShowWeightModal(true)} style={c.sbtn("#ff6b3520","1px solid #ff6b3540","#ff6b35")}>LOG</button>
+              </div>
+              <div style{{display:"flex",gap:3,alignItems:"flex-end",height:56}}>
+                {weekDates.map((d,i)=>{
+                  const w=weights[dateKey(d)];
+                  const allW=Object.values(weights).filter(Boolean);
+                  const min=allW.length?Math.min(...allW)-1:140,max=allW.length?Math.max(...allW)+1:200;
+                  const h=w?Math.max(4,((w-min)/(max-min||1))*50):4;
+                  return(
+                    <div key={i} style{{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      {w&&<div style{{fontSize:7,color:"#ff6b35"}}>{w}</div>}
+                      <div style{{width:"100%",height:`${h}px`,background:w?"#ff6b35":"#1a1a1a",borderRadius:3,minHeight:4}}/>
+                      <div style{{fontSize:7,color:"#999"}}>{DAYS[i].slice(0,1)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={c.card}>
+              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style{{fontSize:9,color:"#999",letterSpacing:2}}>PERSONAL RECORDS</div>
+                <button onClick={()=>setShowPRModal(true)} style={c.sbtn("#4ecdc420","1px solid #4ecdc440","#4ecdc4")}>LOG PR</button>
+              </div>
+              {LIFTS.map(lift=>{
+                const best=Object.entries(prs).flatMap(([,v])=>v[lift]?[v[lift]]:[]).sort((a,b)=>b-a)[0];
+                return(
+                  <div key={lift} style{{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #1a1a1a"}}>
+                    <span style{{fontSize:12,color:"#ccc"}}>{lift}</span>
+                    <span style{{fontSize:13,fontWeight:700,color:best?"#4ecdc4":"#777"}}>{best?`${best} lbs`:"—"}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={c.card}>
+              <div style{{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style{{fontSize:9,color:"#999",letterSpacing:2}}>RUN LOG</div>
+                <button onClick={()=>setShowRunModal(true)} style={c.sbtn("#45b7d120","1px solid #45b7d140","#45b7d1")}>LOG RUN</button>
+              </div>
+              {weekDates.map((d,i)=>{const r=runs[dateKey(d)];if(!r)return null;return(
+                <div key={i} style{{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #1a1a1a"}}>
+                  <span style{{fontSize:11,color:"#888"}}>{DAYS[i].slice(0,3)} {d.getDate()}</span>
+                  <span style{{fontSize:12,color:"#45b7d1",fontWeight:600}}>{r.miles} mi</span>
+                  <span style{{fontSize:11,color:"#999"}}>{r.pace||"—"} /mi</span>
+                </div>
+              );})}
+              {weekDates.every(d=>!runs[dateKey(d)])&&<div style{{fontSize:12,color:"#777",textAlign:"center",padding:"8px 0"}}>No runs this week</div>}
+            </div>
+            <div style={c.card}>
+              <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:8}}>STREAK</div>
+              <div style{{display:"flex",alignItems:"center",gap:12}}>
+                <div style{{fontSize:48,fontWeight:700,color:"#ffeaa7",lineHeight:1}}>{streak}</div>
+                <div style{{fontSize:11,color:"#888"}}>consecutive days with all rules completed</div>
+              </div>
+            </div>
+            <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:10}}>DAY BY DAY</div>
+            {DAYS.map((day,i)=>{
+              const w=WORKOUTS[day],p=getProgress(day),dk=dateKey(weekDates[i]),m=getDayMacros(dk),isTd=day===getTodayName()&&weekOff===0;
+              return(
+                <div key={day} onClick={()=>{setSelDay(day);setWeekOff(0);setTab("today");}} style{{background:"#111",border:isTd?`1px solid ${w.color}55`:"1px solid #1a1a1a",borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:"pointer"}}>
+                  <div style{{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style{{display:"flex",alignItems:"center",gap:10}}>
+                      <div style{{width:32,height:32,borderRadius:9,background:`${w.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:w.color}}>{weekDates[i].getDate()}</div>
+                      <div>
+                        <div style{{fontSize:12,fontWeight:600,color:isTd?"#fff":"#888"}}>{day}{isTd?" · TODAY":""}</div>
+                        <div style{{fontSize:10,color:w.color}}>{w.name}</div>
+                      </div>
+                    </div>
+                    <div style{{textAlign:"right"}}>
+                      <div style{{fontSize:11,color:p===100?"#4ecdc4":"#888"}}>{p}%</div>
+                      <div style{{fontSize:10,color:m.protein>=165?"#4ecdc4":"#888"}}>{m.protein}g · {m.cal}cal</div>
+                    </div>
+                  </div>
+                  <div style{{marginTop:6,height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}><div style{{height:"100%",width:`${p}%`,background:w.color,borderRadius:2}}/></div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* COACH */}
+        {tab==="coach"&&(
+          <div style{{display:"flex",flexDirection:"column",height:"calc(100vh - 230px)"}}>
+            <div style{{fontSize:9,color:"#999",letterSpacing:2,marginBottom:12}}>AI COACH</div>
+            <div style{{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+              {aiMsgs.map((msg,i)=>(
+                <div key={i} style{{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
+                  <div style{{maxWidth:"87%",padding:"10px 12px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"#ff6b35":"#111",border:msg.role==="assistant"?"1px solid #1e1e1e":"none",color:msg.role==="user"?"#000":"#ccc",fontSize:13,lineHeight:1.6,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{msg.content}</div>
+                </div>
+              ))}
+              {aiLoad&&<div style{{display:"flex",gap:4,padding:"10px 12px"}}>{[0,1,2].map(i=><div key={i} style{{width:6,height:6,borderRadius:"50%",background:"#ff6b35",animation:`pulse 1.2s ${i*0.2}s infinite`}}/> )}</div>}
+              <div ref={chatEnd}/>
+            </div>
+            <div style{{display:"flex",gap:8,background:"#111",border:"1px solid #1e1e1e",borderRadius:12,padding:"7px 7px 7px 13px"}}>
+              <input value={aiIn} onChange={e=>setAiIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendCoach()} placeholder="Ask your coach..." style{{flex:1,background:"none",border:"none",outline:"none",color:"#fff",fontSize:13,fontFamily:"inherit"}}/>
+              <button onClick={sendCoach} disabled={aiLoad||!aiIn.trim()} style{{width:32,height:32,borderRadius:9,background:aiIn.trim()?"#ff6b35":"#1a1a1a",border:"none",color:aiIn.trim()?"#000":"#888",fontSize:16,cursor:aiIn.trim()?"pointer":"default",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+            </div>
+            <div style{{display:"flex",gap:5,marginTop:8,overflowX:"auto",paddingBottom:4}}>
+              {["What to eat now?","Am I on track?","Motivate me","Pre-run fuel?","Hit 165g protein?"].map(q=>(
+                <button key={q} onClick={()=>setAiIn(q)} style{{whiteSpace:"nowrap",padding:"5px 9px",background:"#111",border:"1px solid #1a1a1a",borderRadius:20,color:"#aaa",fontSize:9,cursor:"pointer",fontFamily:"inherit"}}>{q}</button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* MODALS */}
+      {showExModal&&(
+        <Modal onClose={()=>setShowExModal(false)} title={`ADD EXERCISE - ${selDay.toUpperCase()}`}>
+          <input value={exInput} onChange={e=>setExInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustEx()} placeholder="e.g. Cable crunch 3x15" style={{...c.inp("#fff"),marginBottom:12}}/>
+          <button onClick={addCustEx} style={c.btn("#ff6b35","#000")}>ADD EXERCISE</button>
+        </Modal>
+      )}
+      {showWeightModal&&(
+        <Modal onClose={()=>setShowWeightModal(false)} title={`LOG WEIGHT - ${selDay.toUpperCase()}`}>
+          <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder="e.g. 156.5" style={{...c.inp("#ff6b35"),fontSize:24,fontWeight:700,marginBottom:8}}/>
+          <div style{{fontSize:9,color:"#999",marginBottom:14}}>lbs</div>
+          <button onClick={()=>{if(weightInput){setWeights(p=>({...p,[selKey]:parseFloat(weightInput)}));setWeightInput("");setShowWeightModal(false);}}} style={c.btn("#ff6b35","#000")}>SAVE</button>
+        </Modal>
+      )}
+      {showPRModal&&(
+        <Modal onClose={()=>setShowPRModal(false)} title="LOG PR" titleColor="#4ecdc4">
+          <div style{{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+            {LIFTS.map(l=><button key={l} onClick={()=>setPrLift(l)} style{{whiteSpace:"nowrap",padding:"7px 11px",background:prLift===l?"#4ecdc4":"#1a1a1a",border:prLift===l?"none":"1px solid #2a2a2a",borderRadius:8,color:prLift===l?"#000":"#888",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>)}
+          </div>
+          <input type="number" value={prInput} onChange={e=>setPrInput(e.target.value)} placeholder="Weight in lbs" style={{...c.inp("#4ecdc4"),fontSize:24,fontWeight:700,marginBottom:12}}/>
+          <button onClick={()=>{if(prInput){setPrs(p=>({...p,[tKey]:{...(p[tKey]||{}),[prLift]:parseFloat(prInput)}}));setPrInput("");setShowPRModal(false);}}} style={c.btn("#4ecdc4","#000")}>SAVE PR</button>
+        </Modal>
+      )}
+      {showRunModal&&(
+        <Modal onClose={()=>setShowRunModal(false)} title={`LOG RUN - ${selDay.toUpperCase()}`} titleColor="#45b7d1">
+          <div style{{display:"flex",gap:8,marginBottom:12}}>
+            <div style{{flex:1}}>
+              <div style{{fontSize:8,color:"#45b7d1",letterSpacing:1,marginBottom:5}}>MILES</div>
+              <input type="number" value={runMiles} onChange={e=>setRunMiles(e.target.value)} placeholder="5.2" style={{...c.inp("#45b7d1"),fontSize:22,fontWeight:700}}/>
+            </div>
+            <div style{{flex:1}}>
+              <div style{{fontSize:8,color:"#96ceb4",letterSpacing:1,marginBottom:5}}>PACE (min/mi)</div>
+              <input value={runPace} onChange={e=>setRunPace(e.target.value)} placeholder="8:30" style={{...c.inp("#96ceb4"),fontSize:22,fontWeight:700}}/>
+            </div>
+          </div>
+          <button onClick={()=>{if(runMiles){setRuns(p=>({...p,[selKey]:{miles:parseFloat(runMiles),pace:runPace}}));setRunMiles("");setRunPace("");setShowRunModal(false);}}} style={c.btn("#45b7d1","#000")}>SAVE RUN</button>
+        </Modal>
+      )}
+      {showRuleModal&&(
+        <Modal onClose={()=>setShowRuleModal(false)} title="ADD DAILY RULE" titleColor="#4ecdc4">
+          <input value={ruleInput} onChange={e=>setRuleInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addRule()} placeholder="e.g. 3L water, Zero alcohol, 8hrs sleep..." style={{...c.inp("#fff"),marginBottom:14}}/>
+          <button onClick={addRule} style={c.btn("#4ecdc4","#000")}>ADD RULE</button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
