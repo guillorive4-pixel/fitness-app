@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>7v7 Playbook</title>
+<title>Flag 7v7 Playbook</title>
 <style>
 :root{--bg:#f4f6f3;--card:#fff;--ink:#1c2420;--muted:#5d6b63;--line:#d8ded9;--sel:#f5b301}
 @media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1c221f;--ink:#e8eee9;--muted:#9aa8a0;--line:#2d3632}}
@@ -27,11 +27,13 @@ svg#f{width:100%;display:block;border-radius:10px;touch-action:none;background:#
 </style>
 </head>
 <body>
-<header>🏈 7v7 Route Designer</header>
+<header>🏈 Flag Football 7v7 Playbook</header>
 <div class="wrap">
  <div class="card">
   <h3>1. Formation</h3>
   <select id="form"></select>
+  <h3>Defense</h3>
+  <select id="def"><option value="">None</option><option>Cover 2</option><option>Cover 3</option><option>Man + Rush</option><option>Cover 3 (no rush)</option></select>
   <h3>2. Tool</h3>
   <div class="btns" id="tools">
    <button data-t="route" class="on">Pick routes</button>
@@ -63,8 +65,9 @@ const FORMS={
 // Route points in yards: [outward, upfield] from start
 const ROUTES={Go:[[0,15]],Slant:[[0,2],[-5,7]],Out:[[0,5],[5,5]],In:[[0,6],[-8,6]],Curl:[[0,7],[-1,5.5]],
  Hitch:[[0,5],[0,4]],Post:[[0,6],[-5,14]],Corner:[[0,6],[5,13]],Flat:[[3,0.5],[8,1]],Wheel:[[4,0],[7,3],[7,15]],
- Comeback:[[0,10],[3,8]],Drag:[[0,2],[-14,3]],Seam:[[0,16]],"Out & Up":[[0,5],[4,5],[4,15]],Block:"block"};
-let S={form:"Spread 2x2",pos:{},routes:{},plays:[]},tool="route",sel="X";
+ Comeback:[[0,10],[3,8]],Drag:[[0,2],[-14,3]],Seam:[[0,16]],"Out & Up":[[0,5],[4,5],[4,15]],"Snag":[[0,5],[-3,5]],"Shallow":[[0,1],[-12,2]]};
+const DEF={"Cover 2":[[20,7],[8,4],[32,4],[16,6],[24,6],[10,13],[30,13]],"Cover 3":[[20,7],[5,6],[35,6],[14,5],[26,5],[20,10],[20,15]],"Man + Rush":[[20,7],[3,2],[11,2],[29,2],[37,2],[20,6],[20,13]],"Cover 3 (no rush)":[[4,6],[13,4],[27,4],[36,6],[20,6],[10,13],[30,13]]};
+let S={def:"",form:"Spread 2x2",pos:{},routes:{},plays:[]},tool="route",sel="X";
 try{Object.assign(S,JSON.parse(localStorage.getItem("pb7")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("pb7",JSON.stringify(S))}catch(e){}};
 const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||$("f")).appendChild(e);return e};
@@ -74,22 +77,23 @@ for(const k in FORMS)$("form").add(new Option(k,k));
 for(const r in ROUTES){const b=document.createElement("button");b.textContent=r;b.onclick=()=>setRoute(r);$("routes").appendChild(b)}
 
 function setRoute(r){
- if(sel=="C"&&r!="Block")return;
  const [x,y]=pos(sel),out=x<50?-1:1;
- S.routes[sel]=ROUTES[r]=="block"?"block":[[x,y],...ROUTES[r].map(([dx,dy])=>[x+dx*out*Y,y-dy*Y])];
+ S.routes[sel]=[[x,y],...ROUTES[r].map(([dx,dy])=>[Math.max(1.5,Math.min(98.5,x+dx*out*Y)),Math.max(1.5,y-dy*Y)])];
  render();
 }
 function render(){
- save();$("form").value=S.form;
+ save();$("form").value=S.form;$("def").value=S.def;
  const f=$("f");f.innerHTML="";
  el("defs",{}).innerHTML='<marker id="ar" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker>';
  for(let yd=0;yd<=20;yd+=5){const y=LOS-yd*Y;el("line",{x1:0,x2:100,y1:y,y2:y,stroke:"#fff","stroke-opacity":yd?.35:0,"stroke-width":.3});
   if(yd)el("text",{x:1.5,y:y-.6,fill:"#fff","fill-opacity":.6,"font-size":2.4}).textContent=yd}
  for(let yd=1;yd<20;yd++)if(yd%5){const y=LOS-yd*Y;[33,67].forEach(x=>el("line",{x1:x-1,x2:x+1,y1:y,y2:y,stroke:"#fff","stroke-opacity":.4,"stroke-width":.3}))}
  el("line",{x1:0,x2:100,y1:LOS,y2:LOS,stroke:"#9cd3ff","stroke-width":.5});
+ if(S.def){const y=LOS-7*Y;el("line",{x1:0,x2:100,y1:y,y2:y,stroke:"#ff9c9c","stroke-width":.4,"stroke-dasharray":"1.5 1"});
+  el("text",{x:99,y:y-.6,"text-anchor":"end",fill:"#ffd0d0","font-size":2.2}).textContent="Rush line (7 yds)";
+  DEF[S.def].forEach(([x,yd],i)=>{const cx=x*Y,cy=LOS-yd*Y;el("text",{x:cx,y:cy+1.2,"text-anchor":"middle","font-size":3.6,"font-weight":700,fill:"#ffd0d0"}).textContent=i==0&&yd>=7&&S.def!="Cover 3 (no rush)"?"R":"D"})}
  for(const k in S.routes){const r=S.routes[k],[x,y]=pos(k);
-  if(r=="block")el("path",{d:`M${x} ${y-2.2}v-2m-1.6 0h3.2`,stroke:"#fff","stroke-width":.6,fill:"none"});
-  else el("polyline",{points:r.map(p=>p.join(",")).join(" "),stroke:"#fff","stroke-width":.6,fill:"none","stroke-linejoin":"round","marker-end":"url(#ar)",...(k==sel?{stroke:"#ffe27a"}:{})});
+  el("polyline",{points:r.map(p=>p.join(",")).join(" "),stroke:"#fff","stroke-width":.6,fill:"none","stroke-linejoin":"round","marker-end":"url(#ar)",...(k==sel?{stroke:"#ffe27a"}:{})});
  }
  for(const k in FORMS[S.form]){const [x,y]=pos(k),g=el("g",{class:"pl"});
   el("circle",{cx:x,cy:y,r:2.2,fill:COL[k],stroke:k==sel?"#f5b301":"#fff","stroke-width":k==sel?.8:.4},g);
@@ -113,12 +117,13 @@ function down(e,k){
 }
 $("tools").onclick=e=>{if(!e.target.dataset.t)return;tool=e.target.dataset.t;[...$("tools").children].forEach(b=>b.classList.toggle("on",b==e.target));render()};
 $("form").onchange=()=>{S.form=$("form").value;S.pos={};S.routes={};render()};
+$("def").onchange=()=>{S.def=$("def").value;render()};
 $("clr").onclick=()=>{delete S.routes[sel];render()};
 $("clrAll").onclick=()=>{S.routes={};render()};
 $("save").onclick=()=>{const name=$("pname").value.trim()||"Play "+(S.plays.length+1);
- S.plays.push({name,form:S.form,pos:S.pos,routes:S.routes});$("pname").value="";render()};
+ S.plays.push({name,def:S.def,form:S.form,pos:S.pos,routes:S.routes});$("pname").value="";render()};
 $("plays").onclick=e=>{const d=e.target.dataset;
- if(d.i){const p=S.plays[d.i];S.form=p.form;S.pos=structuredClone(p.pos);S.routes=structuredClone(p.routes);render()}
+ if(d.i){const p=S.plays[d.i];S.form=p.form;S.def=p.def||"";S.pos=structuredClone(p.pos);S.routes=structuredClone(p.routes);render()}
  if(d.d){S.plays.splice(d.d,1);render()}};
 render();
 </script>
